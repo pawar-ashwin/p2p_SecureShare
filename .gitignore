@@ -1,0 +1,16 @@
+# Ignore virtual environment
+p2p/
+
+# Ignore Python cache files
+__pycache__/
+
+# Ignore SQLite database (if using)
+db.sqlite3
+ 
+# Ignore system-specific files
+*.pyc
+*.pyo
+*.pyd
+.DS_Store
+*.log
+*.env
