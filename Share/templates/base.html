@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>P2P Secure Share</title>
+		<style>
+			/* Basic Reset */
+			* {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+			}
+
+			body {
+				font-family: "Arial", sans-serif;
+				background: #f0f4f7;
+				display: flex;
+				flex-direction: column;
+				min-height: 100vh;
+			}
+
+			/* Navigation Bar */
+			.navbar {
+				background-color: #333;
+				color: #fff;
+				display: flex;
+				justify-content: space-between;
+				padding: 1rem 2rem;
+				align-items: center;
+				position: sticky;
+				top: 0;
+				z-index: 1000;
+				box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+			}
+
+			.navbar .logo {
+				font-size: 1.5rem;
+				font-weight: bold;
+			}
+
+			.navbar ul {
+				list-style: none;
+				display: flex;
+				gap: 2rem;
+			}
+
+			.navbar ul li {
+				display: inline;
+			}
+
+			.navbar ul li a {
+				color: #fff;
+				text-decoration: none;
+				font-size: 1rem;
+				transition: color 0.3s;
+			}
+
+			.navbar ul li a:hover {
+				color: #f0a500;
+			}
+
+			/* Footer */
+			footer {
+				background-color: #333;
+				color: #fff;
+				text-align: center;
+				padding: 1rem;
+				font-size: 1rem;
+				position: relative;
+				bottom: 0;
+				width: 100%;
+			}
+
+			footer a {
+				color: #f0a500;
+				text-decoration: none;
+				margin-left: 5px;
+			}
+
+			footer a:hover {
+				text-decoration: underline;
+			}
+		</style>
+	</head>
+	<body>
+		<!-- Navigation Bar -->
+		<nav class="navbar">
+			<div class="logo">P2P Secure Share</div>
+			<ul>
+				<li><a href="#home">Home</a></li>
+				<li><a href="#login">Login</a></li>
+				<li><a href="#about">About Us</a></li>
+				<li><a href="#contact">Contact</a></li>
+			</ul>
+		</nav>
+
+		{% block content %} {% endblock content %}
+
+		<!-- Footer -->
+		<footer>
+			<p>
+				© 2024 P2P Secure Share. All Rights Reserved. |
+				<a href="#privacy-policy">Privacy Policy</a>
+			</p>
+		</footer>
+	</body>
+</html>
