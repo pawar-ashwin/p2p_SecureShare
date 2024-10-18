@@ -1,0 +1,88 @@
+{% extends 'base.html' %} {% block content %}
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>P2P Secure Share</title>
+		<style>
+			/* Basic Reset */
+			* {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+			}
+
+			body {
+				font-family: "Arial", sans-serif;
+				background: #f0f4f7;
+				display: flex;
+				flex-direction: column;
+				min-height: 100vh;
+			}
+
+			/* Main Body */
+			.main-content {
+				flex: 1;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				background: #f0f4f7;
+				padding: 2rem;
+				font-size: 2rem;
+			}
+
+			.typewriter h1 {
+				font-size: 4rem;
+				color: #333;
+				font-weight: bold;
+				border-right: 2px solid rgba(0, 0, 0, 0.75);
+				white-space: nowrap;
+				overflow: hidden; /* This ensures the typewriting effect works */
+				width: 0;
+				animation: typing 3.5s steps(40, end),
+					blink-caret 0.75s step-end infinite;
+			}
+
+			/* Typing Effect */
+			@keyframes typing {
+				from {
+					width: 0;
+				}
+				to {
+					width: 100%;
+				}
+			}
+
+			@keyframes blink-caret {
+				from,
+				to {
+					border-color: transparent;
+				}
+				50% {
+					border-color: rgba(0, 0, 0, 0.75);
+				}
+			}
+
+			.typewriter h1.stay {
+				width: 100%; /* Ensure it stays at full width after animation */
+				border-right: none; /* Remove the caret after typing */
+			}
+		</style>
+	</head>
+	<body>
+		<!-- Main Body with Typewriter Effect -->
+		<div class="main-content">
+			<div class="typewriter">
+				<h1>P2P Secure Share</h1>
+			</div>
+		</div>
+		<script>
+			// JavaScript to remove the blinking caret after the typewriter effect ends
+			setTimeout(() => {
+				document.querySelector(".typewriter h1").classList.add("stay");
+			}, 3500); // Duration of typing effect (same as the animation duration)
+		</script>
+	</body>
+</html>
+{% endblock content %}

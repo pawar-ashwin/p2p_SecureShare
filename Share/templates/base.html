@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>P2P Secure Share</title>
+		<style>
+			/* Basic Reset */
+			* {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+			}
+
+			body {
+				font-family: "Arial", sans-serif;
+				background: #f0f4f7;
+				display: flex;
+				flex-direction: column;
+				min-height: 100vh;
+			}
+
+			/* Navigation Bar */
+			.navbar {
+				background-color: #333;
+				color: #fff;
+				display: flex;
+				justify-content: space-between;
+				padding: 1rem 2rem;
+				align-items: center;
+				position: sticky;
+				top: 0;
+				z-index: 1000;
+				box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+			}
+
+			.navbar .logo {
+				font-size: 1.5rem;
+				font-weight: bold;
+			}
+
+			.navbar ul {
+				list-style: none;
+				display: flex;
+				gap: 2rem;
+			}
+
+			.navbar ul li {
+				display: inline;
+			}
+
+			.navbar ul li a {
+				color: #fff;
+				text-decoration: none;
+				font-size: 1rem;
+				transition: color 0.3s;
+				cursor: pointer; /* Change cursor to pointer */
+			}
+
+			.navbar ul li a:hover {
+				color: #f0a500;
+			}
+
+			/* Modal Styles */
+			.modal {
+				display: none; /* Hidden by default */
+				position: fixed;
+				z-index: 1; /* Sit on top */
+				left: 0;
+				top: 0;
+				width: 100%; /* Full width */
+				height: 100%; /* Full height */
+				overflow: auto; /* Enable scroll if needed */
+				background-color: rgba(0, 0, 0, 0.7); /* Black w/ opacity */
+				padding-top: 60px;
+			}
+
+			.modal-content {
+				background-color: #ffffff;
+				margin: 5% auto; /* 15% from the top and centered */
+				padding: 30px;
+				border-radius: 10px; /* Rounded corners */
+				box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+				width: 90%; /* Could be more or less, depending on screen size */
+				max-width: 500px; /* Limit maximum width */
+				text-align: left; /* Align text to the left */
+			}
+
+			.close {
+				color: #aaa;
+				float: right;
+				font-size: 28px;
+				font-weight: bold;
+			}
+
+			.close:hover,
+			.close:focus {
+				color: black;
+				text-decoration: none;
+				cursor: pointer;
+			}
+
+			h2 {
+				margin-bottom: 20px; /* Space below the heading */
+				font-size: 1.5rem; /* Adjust heading size */
+				color: #333; /* Darker text for the heading */
+			}
+
+			label {
+				margin-bottom: 5px; /* Space below labels */
+				font-weight: bold; /* Make labels bold */
+				display: block; /* Make labels block-level elements */
+			}
+
+			input[type="text"],
+			input[type="email"],
+			input[type="password"] {
+				width: 100%; /* Full width inputs */
+				padding: 10px; /* Padding inside inputs */
+				margin-bottom: 20px; /* Space below inputs */
+				border: 1px solid #ccc; /* Light border */
+				border-radius: 5px; /* Rounded corners */
+				font-size: 1rem; /* Adjust font size */
+			}
+
+			button {
+				background-color: #f0a500; /* Button background color */
+				color: white; /* Button text color */
+				border: none; /* No border */
+				padding: 10px 20px; /* Padding for button */
+				border-radius: 5px; /* Rounded corners for button */
+				font-size: 1rem; /* Adjust font size */
+				cursor: pointer; /* Pointer cursor on hover */
+				transition: background-color 0.3s; /* Transition for background color */
+			}
+
+			button:hover {
+				background-color: #e09b00; /* Darker shade on hover */
+			}
+
+			/* Footer */
+			footer {
+				background-color: #333;
+				color: #fff;
+				text-align: center;
+				padding: 1rem;
+				font-size: 1rem;
+				position: absolute;
+				bottom: 0;
+				width: 100%;
+			}
+
+			footer a {
+				color: #f0a500;
+				text-decoration: none;
+				margin-left: 5px;
+			}
+
+			footer a:hover {
+				text-decoration: underline;
+			}
+		</style>
+	</head>
+	<body>
+		<!-- Navigation Bar -->
+		<nav class="navbar">
+			<div class="logo">P2P Secure Share</div>
+			<ul>
+				<li><a href="#home">Home</a></li>
+				<li><a href="#" id="loginBtn">Login</a></li>
+				<li><a href="#" id="signupBtn">Signup</a></li>
+				<li><a href="#about">About Us</a></li>
+				<li><a href="#contact">Contact</a></li>
+			</ul>
+		</nav>
+
+		{% block content %} {% endblock content %}
+
+		<!-- Login Modal -->
+		<div id="loginModal" class="modal">
+			<div class="modal-content">
+				<span class="close" id="closeLogin">&times;</span>
+				<h2>Login</h2>
+				<form method="POST" action="/login/">
+					{% csrf_token %}
+					<input type="text" name="username" placeholder="Enter your username">
+					<input type="password" name="password" placeholder="Enter your password">
+					<button type="submit">Login</button>
+				</form>
+				  
+			</div>
+		</div>
+
+		<!-- Signup Modal -->
+		<div id="signupModal" class="modal">
+			<div class="modal-content">
+				<span class="close" id="closeSignup">&times;</span>
+				<h2>Signup</h2>
+				<form method="POST" action="/signup/">
+					{% csrf_token %}
+					<input type="email" name="newEmail" placeholder="Enter your email">
+					<input type="text" name="newUsername" placeholder="Enter your username">
+					<input type="password" name="newPassword" placeholder="Enter your password">
+					<button type="submit">Signup</button>
+				  </form>
+				  
+			</div>
+		</div>
+
+		<!-- Footer -->
+		<footer>
+			<p>
+				© 2024 P2P Secure Share. All Rights Reserved. |
+				<a href="#privacy-policy">Privacy Policy</a>
+			</p>
+		</footer>
+
+		<script>
+			// Get modal elements
+			const loginModal = document.getElementById("loginModal");
+			const signupModal = document.getElementById("signupModal");
+
+			// Get button elements
+			const loginBtn = document.getElementById("loginBtn");
+			const signupBtn = document.getElementById("signupBtn");
+
+			// Get close elements
+			const closeLogin = document.getElementById("closeLogin");
+			const closeSignup = document.getElementById("closeSignup");
+
+			// Open login modal
+			loginBtn.onclick = function () {
+				loginModal.style.display = "block";
+			};
+
+			// Open signup modal
+			signupBtn.onclick = function () {
+				signupModal.style.display = "block";
+			};
+
+			// Close login modal
+			closeLogin.onclick = function () {
+				loginModal.style.display = "none";
+			};
+
+			// Close signup modal
+			closeSignup.onclick = function () {
+				signupModal.style.display = "none";
+			};
+
+			// Close modal when clicking outside of it
+			window.onclick = function (event) {
+				if (event.target == loginModal) {
+					loginModal.style.display = "none";
+				}
+				if (event.target == signupModal) {
+					signupModal.style.display = "none";
+				}
+			};
+
+			// Close modal with Escape key
+			window.addEventListener("keydown", function (event) {
+				if (event.key === "Escape") {
+					if (loginModal.style.display === "block") {
+						loginModal.style.display = "none";
+					}
+					if (signupModal.style.display === "block") {
+						signupModal.style.display = "none";
+					}
+				}
+			});
+		</script>
+	</body>
+</html>
