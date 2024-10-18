@@ -15,8 +15,8 @@ except Exception as e:
     print("Connection failed:", e)
 
 # Define the users_collection
-db = client['users']  # Replace with your actual database name
-users_collection = db['loginCredentials']  # Replace with your actual users collection name
+db = client['users']  
+users_collection = db['loginCredentials']  
 
 class HomePage(TemplateView):
     template_name = 'home.html'
