@@ -83,3 +83,55 @@ def user_dashboard(request):
         return render(request, 'user.html', {'username': username})
     else:
         return redirect('home')
+    
+    
+#create functions for uploading and downloading files using sockets
+import socket
+
+def upload_file(filename):
+    host = '127.0.0.1'
+    port = 65432
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.connect((host, port))
+        s.sendall(f'UPLOAD {filename}'.encode('utf-8'))
+        with open(filename, 'rb') as f:
+            s.sendfile(f)
+        print(f'{filename} uploaded.')
+
+def download_file(filename):
+    host = '127.0.0.1'
+    port = 65432
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.connect((host, port))
+        s.sendall(f'DOWNLOAD {filename}'.encode('utf-8'))
+        with open(f'downloaded_{filename}', 'wb') as f:
+            while True:
+                data = s.recv(1024)
+                if not data:
+                    break
+                f.write(data)
+        print(f'{filename} downloaded.')
+
+#views for file upload and download
+from django.shortcuts import render
+from django.http import HttpResponse
+from .your_socket_module import upload_file, download_file  # Adjust the import based on your file structure
+
+def upload_view(request):
+    if request.method == 'POST':
+        uploaded_file = request.FILES['file']
+        with open(uploaded_file.name, 'wb+') as destination:
+            for chunk in uploaded_file.chunks():
+                destination.write(chunk)
+        upload_file(uploaded_file.name)
+        return HttpResponse("File uploaded.")
+    return render(request, 'upload.html')
+
+def download_view(request):
+    if request.method == 'POST':
+        filename = request.POST['filename']
+        download_file(filename)
+        return HttpResponse(f"{filename} downloaded.")
+    return render(request, 'download.html')

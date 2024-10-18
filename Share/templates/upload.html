@@ -1,0 +1,5 @@
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="file" name="file" accept=".jpg">
+    <button type="submit">Upload</button>
+</form>
