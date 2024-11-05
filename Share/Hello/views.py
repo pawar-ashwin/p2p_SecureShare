@@ -1,5 +1,6 @@
 # views.py
 
+import os
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.views.generic import TemplateView
@@ -155,3 +156,24 @@ def update_email(request):
             return JsonResponse({'status': 'error', 'message': 'Invalid email provided.'})
     else:
         return JsonResponse({'status': 'error', 'message': 'Unauthorized request.'})
+
+
+def my_files(request):
+    if 'username' in request.session:
+        username = request.session['username']
+        user = users_collection.find_one({"username": username})
+        share_path = user.get('share_path', '')
+
+        files = []
+        if share_path and os.path.isdir(share_path):
+            try:
+                # List all files in the share path directory
+                files = os.listdir(share_path)
+            except Exception as e:
+                messages.error(request, f"Error accessing files: {e}")
+        else:
+            messages.error(request, "Invalid or empty share path.")
+
+        return render(request, 'userfiles.html', {'files': files, 'username': username, 'share_path': share_path})
+    else:
+        return redirect('home')

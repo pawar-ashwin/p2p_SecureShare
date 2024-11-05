@@ -15,7 +15,7 @@
 
 			.profile-container {
 				max-width: 600px;
-				margin: 50px auto;
+				margin: 100px auto;
 				background-color: white;
 				padding: 20px;
 				border-radius: 10px;
@@ -83,6 +83,7 @@
 		</style>
 	</head>
 	<body>
+		{% include 'navbar.html' %}
 		<div class="profile-container">
 			<img id="profileIdenticon" class="identicon" alt="User Identity Icon" />
 			<div class="username">
@@ -166,8 +167,8 @@
 			}
 
 			// Assuming username variable is populated dynamically in the actual app
-			const userId = "{{ username }}";
-			generateIdenticon(userId);
+			const user_id = "{{ username }}";
+			generateIdenticon(user_id);
 
 			// function editField(fieldId) {
 			// 	const field = document.getElementById(fieldId);
