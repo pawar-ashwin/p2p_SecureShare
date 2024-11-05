@@ -1,8 +1,11 @@
+# views.py
+
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.views.generic import TemplateView
 from pymongo import MongoClient
 from django.contrib import messages
+from django.http import JsonResponse
 
 # MongoDB connection setup
 mongo_uri = "mongodb+srv://sowmyamutya20:hyB1Mq5ODLBssNDl@logincredentials.oalqb.mongodb.net/?retryWrites=true&w=majority&appName=loginCredentials"
@@ -15,8 +18,8 @@ except Exception as e:
     print("Connection failed:", e)
 
 # Define the users_collection
-db = client['users']  
-users_collection = db['loginCredentials']  
+db = client['users']
+users_collection = db['loginCredentials']
 
 class HomePage(TemplateView):
     template_name = 'home.html'
@@ -43,7 +46,8 @@ def signup(request):
             result = users_collection.insert_one({
                 'email': new_email,
                 'username': new_username,
-                'password': new_password  # Ideally, hash the password before storing
+                'password': new_password,  # Ideally, hash the password before storing
+                'share_path' : ''
             })
             print("Insertion result:", result)
             messages.success(request, 'Signup successful! You can now log in.')
@@ -53,10 +57,7 @@ def signup(request):
 
         return redirect('home')  # Redirect to home page after successful signup
     
-    # Remove the `render('signup.html')` part
     return redirect('home')  # Redirect to home page for GET request
-
-
 
 def login(request):
     if request.method == 'POST':
@@ -74,12 +75,83 @@ def login(request):
             messages.error(request, 'Invalid credentials! Please try again.')
             return redirect('home')  # Redirect back to the home page if login fails
     
-    # Remove the `render('login.html')` part
     return redirect('home')  # Redirect to home page for GET request
 
 def user_dashboard(request):
     if 'username' in request.session:
         username = request.session['username']
-        return render(request, 'user.html', {'username': username})
+        user = users_collection.find_one({"username": username})
+
+        return render(request, 'user.html', {'username': username, "share_path" : user['share_path']})
     else:
         return redirect('home')
+
+# New profile view
+def user_profile(request):
+    if 'username' in request.session:
+        username = request.session['username']
+        
+        # Fetch user details from the database
+        user = users_collection.find_one({'username': username})
+        
+        if user:
+            return render(request, 'profile.html', {
+                'username': user['username'],
+                'email': user['email'],
+                'share_path': user.get('share_path', '')  # Default to an empty string if not set
+            })
+        else:
+            messages.error(request, 'User not found.')
+            return redirect('home')
+    else:
+        return redirect('home')
+    
+def update_share_path(request):
+    if request.method == 'POST' and 'username' in request.session:
+        username = request.session['username']
+        new_share_path = request.POST.get('share_path')
+
+        # Update share path in MongoDB if provided
+        if new_share_path or new_share_path == "":
+            try:
+                result = users_collection.update_one(
+                    {'username': username},
+                    {'$set': {'share_path': new_share_path}}
+                )
+
+                if result.modified_count > 0:
+                    return JsonResponse({'status': 'success', 'message': 'Share path updated successfully.'})
+                else:
+                    return JsonResponse({'status': 'error', 'message': 'No changes made to the share path.'})
+            except Exception as e:
+                return JsonResponse({'status': 'error', 'message': f'Error updating share path: {str(e)}'})
+        else:
+            return JsonResponse({'status': 'error', 'message': 'Invalid share path provided.'})
+    else:
+        return JsonResponse({'status': 'error', 'message': 'Unauthorized request.'})
+    
+
+def update_email(request):
+    if request.method == 'POST' and 'username' in request.session:
+        username = request.session['username']
+        new_email = request.POST.get('email')
+
+        # Check if a new email is provided
+        if new_email:
+            try:
+                # Update the email in MongoDB
+                result = users_collection.update_one(
+                    {'username': username},
+                    {'$set': {'email': new_email}}
+                )
+                
+                if result.modified_count > 0:
+                    return JsonResponse({'status': 'success', 'message': 'Email updated successfully.'})
+                else:
+                    return JsonResponse({'status': 'error', 'message': 'No changes made to the email.'})
+            except Exception as e:
+                return JsonResponse({'status': 'error', 'message': f'Error updating email: {str(e)}'})
+        else:
+            return JsonResponse({'status': 'error', 'message': 'Invalid email provided.'})
+    else:
+        return JsonResponse({'status': 'error', 'message': 'Unauthorized request.'})

@@ -28,6 +28,12 @@
 				color: white;
 			}
 
+			.top-bar img {
+				width: 40px; /* Adjust the size of the icon */
+				height: 40px; /* Adjust the size of the icon */
+				margin-right: 10px; /* Space between icon and text */
+			}
+
 			.search-bar input[type="text"] {
 				padding: 8px;
 				width: 500px;
@@ -79,11 +85,19 @@
 			.dropdown a:hover {
 				background-color: #f0f4f7;
 			}
+
+			.iconName {
+				display: flex;
+			}
 		</style>
 	</head>
 	<body>
 		<div class="top-bar">
-			<h2>P2P Secure Share</h2>
+			<div class="iconName">
+				<img src="image.png" alt="App Icon" />
+				<!-- Replace with your icon's path -->
+				<h2>P2P Secure Share</h2>
+			</div>
 			<div class="search-bar">
 				<input type="text" placeholder="Search for files..." />
 			</div>
@@ -99,10 +113,30 @@
 					<span id="username">{{ username }}</span>
 				</div>
 				<div class="dropdown" id="profileDropdown">
-					<a href="#profile">Profile</a>
+					<a href="{% url 'user_profile' %}">Profile</a>
 					<a href="#settings">Settings</a>
 					<a href="#signout">Sign Out</a>
 				</div>
+				{% if not share_path %}
+				<button
+					id="sharePathPrompt"
+					style="
+						position: absolute;
+						left: -28px;
+						top: 38px;
+						background-color: red;
+						color: white;
+						padding: 5px 10px;
+						border: none;
+						border-radius: 5px;
+						font-size: 14px;
+						cursor: pointer;
+						box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+					"
+				>
+					+ share path
+				</button>
+				{% endif %}
 			</div>
 		</div>
 
@@ -176,6 +210,44 @@
 			window.addEventListener("click", function (event) {
 				if (!profileToggle.contains(event.target)) {
 					profileDropdown.style.display = "none";
+				}
+			});
+
+			// Function to update the share path via AJAX
+			function updateSharePath(newSharePath) {
+				fetch("{% url 'update_share_path' %}", {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/x-www-form-urlencoded",
+						"X-CSRFToken": "{{ csrf_token }}",
+					},
+					body: new URLSearchParams({ share_path: newSharePath }),
+				})
+					.then((response) => response.json())
+					.then((data) => {
+						if (data.status === "success") {
+							alert(data.message);
+							document.getElementById("sharePathPrompt").style.display = "none";
+						} else {
+							alert("Failed to update share path: " + data.message);
+						}
+					})
+					.catch((error) => {
+						console.error("Error:", error);
+						alert("An error occurred while updating the share path.");
+					});
+			}
+
+			// Trigger share path update when needed
+			document.addEventListener("DOMContentLoaded", function () {
+				const sharePathPrompt = document.getElementById("sharePathPrompt");
+				if (sharePathPrompt) {
+					sharePathPrompt.addEventListener("click", function () {
+						const newSharePath = prompt("Please enter your share path:");
+						if (newSharePath) {
+							updateSharePath(newSharePath);
+						}
+					});
 				}
 			});
 		</script>

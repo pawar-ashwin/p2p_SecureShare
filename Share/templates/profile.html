@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+		<title>User Profile</title>
+		<style>
+			body {
+				font-family: Arial, sans-serif;
+				margin: 0;
+				padding: 0;
+				background-color: #f0f4f7;
+			}
+
+			.profile-container {
+				max-width: 600px;
+				margin: 50px auto;
+				background-color: white;
+				padding: 20px;
+				border-radius: 10px;
+				box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+				text-align: center;
+			}
+
+			.identicon {
+				width: 100px;
+				height: 100px;
+				border-radius: 50%;
+				border: 4px solid #f0a500;
+				margin-bottom: 10px;
+			}
+
+			.username {
+				font-size: 1.5rem;
+				font-weight: bold;
+				margin: 10px 0;
+			}
+
+			.rating {
+				font-size: 1rem;
+				color: #f0a500;
+			}
+
+			.field-container {
+				margin: 15px 0;
+				text-align: left;
+			}
+
+			.field-label {
+				font-weight: bold;
+				display: block;
+				margin-bottom: 5px;
+			}
+
+			.field {
+				width: 100%;
+				padding: 8px;
+				border: 1px solid #ccc;
+				border-radius: 5px;
+			}
+
+			.edit-button {
+				background-color: #f0a500;
+				border: none;
+				padding: 6px 10px;
+				color: white;
+				cursor: pointer;
+				border-radius: 5px;
+				margin-top: 10px;
+			}
+
+			.signout-button {
+				width: 100%;
+				padding: 10px;
+				background-color: #333;
+				color: white;
+				border: none;
+				border-radius: 5px;
+				font-size: 1rem;
+				cursor: pointer;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="profile-container">
+			<img id="profileIdenticon" class="identicon" alt="User Identity Icon" />
+			<div class="username">
+				<span id="profileUsername">{{ username }}</span>
+				<span class="rating">⭐ 4.5</span>
+			</div>
+
+			<div class="field-container">
+				<label class="field-label" for="email">Email:</label>
+				<input
+					type="email"
+					id="email"
+					class="field"
+					value="{{ email }}"
+					readonly
+				/>
+				<button class="edit-button" onclick="editField('email')">Edit</button>
+			</div>
+
+			<div class="field-container">
+				<label class="field-label" for="sharePath">Share Path:</label>
+				<input
+					type="text"
+					id="sharePath"
+					class="field"
+					value="{{ share_path }}"
+					readonly
+				/>
+				<button class="edit-button" onclick="editField('sharePath')">
+					Edit
+				</button>
+			</div>
+
+			<button class="signout-button">Sign Out</button>
+		</div>
+
+		<script>
+			function md5Hash(string) {
+				return CryptoJS.MD5(string).toString(CryptoJS.enc.Hex);
+			}
+
+			function generateIdenticon(userId, size = 100) {
+				const userHash = md5Hash(userId);
+				const color = `#${userHash.slice(0, 6)}`;
+				const canvas = document.createElement("canvas");
+				canvas.width = size;
+				canvas.height = size;
+				const context = canvas.getContext("2d");
+				const gridSize = 5;
+				const squareSize = size / gridSize;
+
+				let pattern = Array.from(
+					{ length: gridSize * Math.ceil(gridSize / 2) },
+					(_, i) => parseInt(userHash[i], 16) % 2
+				);
+
+				context.clearRect(0, 0, size, size);
+				context.fillStyle = color;
+
+				for (let y = 0; y < gridSize; y++) {
+					for (let x = 0; x < Math.ceil(gridSize / 2); x++) {
+						if (pattern[y * Math.ceil(gridSize / 2) + x] === 1) {
+							context.fillRect(
+								x * squareSize,
+								y * squareSize,
+								squareSize,
+								squareSize
+							);
+							context.fillRect(
+								(gridSize - x - 1) * squareSize,
+								y * squareSize,
+								squareSize,
+								squareSize
+							);
+						}
+					}
+				}
+
+				const img = document.getElementById("profileIdenticon");
+				img.src = canvas.toDataURL("image/png");
+			}
+
+			// Assuming username variable is populated dynamically in the actual app
+			const userId = "{{ username }}";
+			generateIdenticon(userId);
+
+			// function editField(fieldId) {
+			// 	const field = document.getElementById(fieldId);
+			// 	field.readOnly = !field.readOnly;
+			// 	field.focus();
+			// }
+			function editField(fieldId) {
+				const field = document.getElementById(fieldId);
+				field.readOnly = !field.readOnly;
+				if (!field.readOnly) {
+					field.focus();
+				} else if (fieldId === "email") {
+					// Call function to update email in the database when the field is saved
+					updateEmail(field.value);
+				} else if (fieldId === "sharePath") {
+					updateSharePath(field.value);
+				}
+			}
+
+			function updateEmail(newEmail) {
+				fetch("{% url 'update_email' %}", {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/x-www-form-urlencoded",
+						"X-CSRFToken": "{{ csrf_token }}",
+					},
+					body: new URLSearchParams({ email: newEmail }),
+				})
+					.then((response) => response.json())
+					.then((data) => {
+						if (data.status === "success") {
+							alert(data.message);
+						} else {
+							alert("Failed to update email: " + data.message);
+						}
+					})
+					.catch((error) => {
+						console.error("Error:", error);
+						alert("An error occurred while updating the email.");
+					});
+			}
+
+			function updateSharePath(newSharePath) {
+				fetch("{% url 'update_share_path' %}", {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/x-www-form-urlencoded",
+						"X-CSRFToken": "{{ csrf_token }}",
+					},
+					body: new URLSearchParams({ share_path: newSharePath }),
+				})
+					.then((response) => response.json())
+					.then((data) => {
+						if (data.status === "success") {
+							alert(data.message);
+							// document.getElementById("sharePathPrompt").style.display = "none";
+						} else {
+							alert("Failed to update share path: " + data.message);
+						}
+					})
+					.catch((error) => {
+						console.error("Error:", error);
+						alert("An error occurred while updating the share path.");
+					});
+			}
+		</script>
+	</body>
+</html>
