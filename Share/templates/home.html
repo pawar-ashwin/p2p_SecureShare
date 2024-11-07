@@ -71,6 +71,14 @@
 		</style>
 	</head>
 	<body>
+		<!-- Check for messages and display them -->
+		{% if messages %}
+		  <div class="message {% for message in messages %} {{ message.tags }} {% endfor %}">
+		  	{% for message in messages %}
+			  <p>{{ message }}</p>
+		    {% endfor %}
+		  </div>
+	    {% endif %}
 		<!-- Main Body with Typewriter Effect -->
 		<div class="main-content">
 			<div class="typewriter">

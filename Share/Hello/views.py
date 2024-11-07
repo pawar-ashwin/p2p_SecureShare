@@ -7,6 +7,8 @@ from django.views.generic import TemplateView
 from pymongo import MongoClient
 from django.contrib import messages
 from django.http import JsonResponse
+from django.shortcuts import redirect
+from django.contrib import messages
 
 # MongoDB connection setup
 mongo_uri = "mongodb+srv://sowmyamutya20:hyB1Mq5ODLBssNDl@logincredentials.oalqb.mongodb.net/?retryWrites=true&w=majority&appName=loginCredentials"
@@ -71,6 +73,7 @@ def login(request):
         if user:
             request.session['username'] = username  # Store the username in the session
             messages.success(request, 'Login successful!')
+            print("Message set: Login successful!") 
             return redirect('user_dashboard')  # Redirect to the user dashboard after login
         else:
             messages.error(request, 'Invalid credentials! Please try again.')
@@ -177,3 +180,14 @@ def my_files(request):
         return render(request, 'userfiles.html', {'files': files, 'username': username, 'share_path': share_path})
     else:
         return redirect('home')
+
+#signout API
+def signout(request):
+    # Clear the session to log the user out
+    request.session.flush()
+
+    # display logout message
+    messages.success(request, 'You have successfully logged out.')
+
+    # Redirect to the home page
+    return redirect('home')

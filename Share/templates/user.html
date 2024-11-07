@@ -1,15 +1,49 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>User Dashboard</title>
-	</head>
-	<body>
-		{% include 'navbar.html' %}
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>User Dashboard</title>
+    <style>
+      body {
+        font-family: "Arial", sans-serif;
+        background: #f0f4f7;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+      .message {
+        padding: 10px;
+        margin: 10px;
+        border-radius: 5px;
+      }
 
-		<div class="container">
-			<p>This is the user's personalized page.</p>
-		</div>
-	</body>
+      .success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+
+      .error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+    </style>
+  </head>
+  <body>
+    {% if messages %}
+    <div
+      class="message {% for message in messages %} {{ message.tags }} {% endfor %}"
+    >
+      {% for message in messages %}
+      <p>{{ message }}</p>
+      {% endfor %}
+    </div>
+    {% endif %} {% include 'navbar.html' %}
+
+    <div class="container">
+      <p>This is the user's personalized page.</p>
+    </div>
+  </body>
 </html>
