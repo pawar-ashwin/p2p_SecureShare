@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat Room</title>
+    <script src="{% static 'chat.js' %}"></script>
+</head>
+<body>
+    <h2>Chat with {{ receiver.username }}</h2>
+    <ul id="message-list">
+        {% for message in messages %}
+            <li>{{ message.sender.username }}: {{ message.content }} ({{ message.timestamp }})</li>
+        {% endfor %}
+    </ul>
+
+    <input id="chat-message-input" type="text" placeholder="Type your message...">
+    <button id="chat-message-submit">Send</button>
+
+    <script>
+        document.getElementById('json-username').textContent = "{{ receiver.username }}";
+    </script>
+</body>
+</html>
