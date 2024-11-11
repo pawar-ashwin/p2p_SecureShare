@@ -1,5 +1,5 @@
 # views.py
-
+import datetime
 import os
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
@@ -7,6 +7,11 @@ from django.views.generic import TemplateView
 from pymongo import MongoClient
 from django.contrib import messages
 from django.http import JsonResponse
+import random
+from django.views.decorators.http import require_GET
+from django.utils.html import escape
+from django.views.decorators.csrf import csrf_exempt
+import json
 
 # MongoDB connection setup
 mongo_uri = "mongodb+srv://sowmyamutya20:hyB1Mq5ODLBssNDl@logincredentials.oalqb.mongodb.net/?retryWrites=true&w=majority&appName=loginCredentials"
@@ -78,12 +83,28 @@ def login(request):
     
     return redirect('home')  # Redirect to home page for GET request
 
+# def user_dashboard(request):
+#     if 'username' in request.session:
+#         username = request.session['username']
+#         user = users_collection.find_one({"username": username})
+
+#         return render(request, 'user.html', {'username': username, "share_path" : user['share_path']})
+#     else:
+#         return redirect('home')
+
 def user_dashboard(request):
     if 'username' in request.session:
         username = request.session['username']
         user = users_collection.find_one({"username": username})
+        # Get popular files from other users' shared paths
+        popular_files_list = popular_files()
 
-        return render(request, 'user.html', {'username': username, "share_path" : user['share_path']})
+        # Render the dashboard with popular files only
+        return render(request, 'user.html', {
+            'username': username,
+            "share_path" : user['share_path'],
+            "popular_files": popular_files_list
+        })
     else:
         return redirect('home')
 
@@ -177,3 +198,106 @@ def my_files(request):
         return render(request, 'userfiles.html', {'files': files, 'username': username, 'share_path': share_path})
     else:
         return redirect('home')
+
+def popular_files():
+    """
+    Fetches random files from all users' share paths for the 'Popular Files on the Network' section.
+    """
+    all_files = []
+    all_users = users_collection.find({"share_path": {"$ne": ""}})  # Users with non-empty share paths
+
+    for user in all_users:
+        share_path = user.get("share_path", "")
+        
+        # Verify the path exists and is a directory
+        if share_path and os.path.isdir(share_path):
+            try:
+                # Get all files in the user's share path
+                user_files = os.listdir(share_path)
+                all_files.extend([{"username": user["username"], "file": file} for file in user_files])
+            except Exception as e:
+                print(f"Error accessing files in {share_path}: {e}")
+    
+    # Randomly select up to 10 files for display
+    random_files = random.sample(all_files, min(len(all_files), 12))
+    return random_files
+
+@require_GET
+def search_files(request):
+    if 'username' in request.session:
+        username_main = request.session['username']
+        query = request.GET.get('query', '').strip()  # Get the search query
+        query = escape(query)  # Escape to prevent XSS
+
+        # Search across all users' shared files
+        search_results = []
+        for user in users_collection.find({}):
+            username = user['username']
+            share_path = user.get('share_path', '')
+            print("I AM COMING HERE!");
+            if share_path and os.path.isdir(share_path):
+                try:
+                    # Filter files that match the query
+                    files = [f for f in os.listdir(share_path) if query.lower() in f.lower()]
+                    for file_name in files:
+                        search_results.append({'username': username, 'file': file_name, "share_path" : share_path})
+                except Exception as e:
+                    print(f"Error accessing files for {username}: {e}")
+                    continue
+
+        return render(request, 'user.html', {'search_results': search_results, 'query': query, 'username': username_main, 'share_path': share_path})
+    else:
+        return redirect('home')
+    
+
+@csrf_exempt
+def request_file(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        requester = request.session['username']
+        owner = data['owner']
+        filename = data['filename']
+
+        db.file_requests.insert_one({
+            'requester': requester,
+            'owner': owner,
+            'filename': filename,
+            'status': 'Pending'
+        })
+
+        return JsonResponse({'message': 'File request sent successfully!'})
+
+def file_requests(request):
+    username = request.session['username']
+    requests = db.file_requests.find({'owner': username, 'status': 'Pending'})
+
+    return render(request, 'file_requests.html', {'requests': requests})
+
+def chat_view(request, username):
+    current_user = request.session['username']
+    messages = db.chats.find({
+        '$or': [
+            {'sender': current_user, 'receiver': username},
+            {'sender': username, 'receiver': current_user}
+        ]
+    })
+
+    return render(request, 'chat.html', {'messages': messages, 'receiver': username})
+
+@csrf_exempt
+def send_message(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        sender = request.session['username']
+        receiver = data['receiver']
+        message = data['message']
+
+        db.chats.insert_one({
+            'sender': sender,
+            'receiver': receiver,
+            'message': message,
+            'timestamp': datetime.now()
+        })
+
+        return JsonResponse({'message': 'Message sent!'})
+
