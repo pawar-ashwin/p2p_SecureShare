@@ -12,3 +12,4 @@ class Message(models.Model):
 
     class Meta:
         ordering = ['timestamp']  # to display the oldest messages first
+

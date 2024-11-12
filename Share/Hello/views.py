@@ -9,14 +9,14 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.contrib import messages
-from utils.db import get_collection
+from utils.db import get_collection,get_mongo_client
 
 # Access the `loginCredentials` collection from the `users` database
 users_collection = get_collection('users', 'loginCredentials')
 
 # MongoDB connection setup
 #mongo_uri = "mongodb+srv://sowmyamutya20:hyB1Mq5ODLBssNDl@logincredentials.oalqb.mongodb.net/?retryWrites=true&w=majority&appName=loginCredentials"
-#client = MongoClient(mongo_uri, ssl=True)
+client = get_mongo_client()
 
 try:
     client.admin.command('ping')
