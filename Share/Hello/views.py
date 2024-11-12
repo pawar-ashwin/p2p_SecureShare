@@ -245,28 +245,46 @@ def search_files(request):
         username_main = request.session['username']
         user_main = users_collection.find_one({"username": username_main})
         share_path_main = user_main.get('share_path', '')
+        
+        # Get the search query from the GET parameters
         query = request.GET.get('query', '').strip()  # Get the search query
         query = escape(query)  # Escape to prevent XSS
-
-        # Search across all users' shared files
+        
+        # List to store search results
         search_results = []
+
+        # Iterate through all users' data to search their files
         for user in users_collection.find({}):
             username = user['username']
             share_path = user.get('share_path', '')
-            # print("I AM COMING HERE!");
-            if share_path and os.path.isdir(share_path):
+            user_files = user.get('My_files', [])  # Get the files for each user
+            
+            # If the user has files and a share path, search within the user's files
+            if user_files:
                 try:
                     # Filter files that match the query
-                    files = [f for f in os.listdir(share_path) if query.lower() in f.lower()]
-                    for file_name in files:
-                        search_results.append({'username': username, 'file': file_name, "share_path" : share_path})
+                    matching_files = [f for f in user_files if query.lower() in f.lower()]
+                    for file_name in matching_files:
+                        # Add the matching file to the results
+                        search_results.append({
+                            'username': username, 
+                            'file': file_name, 
+                            'share_path': share_path
+                        })
                 except Exception as e:
                     print(f"Error accessing files for {username}: {e}")
                     continue
-
-        return render(request, 'user.html', {'search_results': search_results, 'query': query, 'username': username_main, 'share_path': share_path_main})
+        
+        # Render the search results in the template
+        return render(request, 'user.html', {
+            'search_results': search_results, 
+            'query': query, 
+            'username': username_main, 
+            'share_path': share_path_main
+        })
     else:
         return redirect('home')
+
     
 
 @csrf_exempt
