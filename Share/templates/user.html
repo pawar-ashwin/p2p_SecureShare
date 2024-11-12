@@ -82,6 +82,7 @@
 			<div class="file-tile">
 				<p><strong>{{ file.username }}</strong></p>
 				<p>{{ file.file }}</p>
+				{% if file.username != username%}
 				<button
 					class="classic-button"
 					onclick="requestFile('{{ file.username }}', '{{ file.file }}')"
@@ -94,11 +95,13 @@
 				>
 					Chat
 				</button>
+				{% endif %}
 			</div>
 			{% endfor %} {% else %} {% for file in popular_files %}
 			<div class="file-tile">
 				<p><strong>{{ file.username }}</strong></p>
 				<p>{{ file.file }}</p>
+				{% if file.username != username%}
 				<button
 					class="classic-button"
 					onclick="requestFile('{{ file.username }}', '{{ file.file }}')"
@@ -111,6 +114,7 @@
 				>
 					Chat
 				</button>
+				{% endif %}
 			</div>
 			{% endfor %} {% endif %}
 		</div>
