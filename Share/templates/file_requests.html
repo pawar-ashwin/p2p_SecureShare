@@ -1,0 +1,20 @@
+<h2>File Requests</h2>
+<ul>
+	{% for request in requests %}
+	<li>
+		{{ request.requester }} requested {{ request.filename }}
+		<button onclick="approveRequest('{{ request._id }}')">Approve</button>
+		<button onclick="declineRequest('{{ request._id }}')">Decline</button>
+	</li>
+	{% endfor %}
+</ul>
+
+<script>
+	function approveRequest(requestId) {
+		// Code to approve request
+	}
+
+	function declineRequest(requestId) {
+		// Code to decline request
+	}
+</script>

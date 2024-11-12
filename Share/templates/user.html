@@ -1,49 +1,99 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>User Dashboard</title>
-    <style>
-      body {
-        font-family: "Arial", sans-serif;
-        background: #f0f4f7;
-        display: flex;
-        flex-direction: column;
-        min-height: 100vh;
-      }
-      .message {
-        padding: 10px;
-        margin: 10px;
-        border-radius: 5px;
-      }
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>User Dashboard</title>
+		<style>
+			.file-tiles {
+				display: grid;
+				grid-template-columns: repeat(4, 1fr); /* 4 tiles per row */
+				gap: 20px;
+				justify-content: center; /* Center the grid within the container */
+				padding: 20px;
+			}
+			.file-tile {
+				border: 1px solid #ddd;
+				border-radius: 8px;
+				padding: 15px;
+				text-align: center;
+				background-color: #f0f0f0;
+				box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+				transition: transform 0.2s;
+			}
+			.file-tile:hover {
+				transform: translateY(-5px); /* Slight lift on hover */
+			}
+		</style>
+	</head>
+	<body style="padding-top: 100px">
+		{% include 'navbar.html' %}
 
-      .success {
-        background-color: #d4edda;
-        color: #155724;
-        border: 1px solid #c3e6cb;
-      }
+		<!-- <h2 style="text-align: center">Popular Files on the Network</h2>
+		<div class="file-tiles">
+			{% for file in popular_files %}
+			<div class="file-tile">
+				<p><strong>{{ file.username }}</strong></p>
+				<p>{{ file.file }}</p>
+			</div>
+			{% endfor %}
+		</div> -->
 
-      .error {
-        background-color: #f8d7da;
-        color: #721c24;
-        border: 1px solid #f5c6cb;
-      }
-    </style>
-  </head>
-  <body>
-    {% if messages %}
-    <div
-      class="message {% for message in messages %} {{ message.tags }} {% endfor %}"
-    >
-      {% for message in messages %}
-      <p>{{ message }}</p>
-      {% endfor %}
-    </div>
-    {% endif %} {% include 'navbar.html' %}
+		<h2 style="text-align: center">
+			{% if query %}Search Results for "{{ query }}"{% else %}Popular Files on
+			the Network{% endif %}
+		</h2>
 
-    <div class="container">
-      <p>This is the user's personalized page.</p>
-    </div>
-  </body>
+		<div class="file-tiles">
+			{% if query %} {% for file in search_results %}
+			<div class="file-tile">
+				<p><strong>{{ file.username }}</strong></p>
+				<p>{{ file.file }}</p>
+				<button onclick="requestFile('{{ file.username }}', '{{ file.file }}')">
+					Request
+				</button>
+				<button onclick="openChat('{{ file.username }}')">Chat</button>
+			</div>
+			{% endfor %} {% else %} {% for file in popular_files %}
+			<div class="file-tile">
+				<p><strong>{{ file.username }}</strong></p>
+				<p>{{ file.file }}</p>
+				<button onclick="requestFile('{{ file.username }}', '{{ file.file }}')">
+					Request
+				</button>
+				<button onclick="openChat('{{ file.username }}')">Chat</button>
+			</div>
+			{% endfor %} {% endif %}
+		</div>
+		<!-- <div class="file-tiles">
+			{% for file in popular_files %}
+			<div class="file-tile">
+				<p>{{ file.file }}</p>
+				<p>Shared by: {{ file.username }}</p>
+				<button onclick="requestFile('{{ file.username }}', '{{ file.file }}')">
+					Request
+				</button>
+				<button onclick="openChat('{{ file.username }}')">Chat</button>
+			</div>
+			{% endfor %}
+		</div> -->
+		<script>
+			function requestFile(owner, filename) {
+				fetch(`/request_file/`, {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+						"X-CSRFToken": "{{ csrf_token }}",
+					},
+					body: JSON.stringify({ owner: owner, filename: filename }),
+				})
+					.then((response) => response.json())
+					.then((data) => alert(data.message));
+			}
+
+			function openChat(username) {
+				window.location.href = `/chat/${username}/`; // Redirect to chat page with the selected user
+			}
+		</script>
+	</body>
 </html>

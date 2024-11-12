@@ -1,0 +1,27 @@
+<h2>Chat with {{ receiver }}</h2>
+<div id="chat-messages">
+	{% for msg in messages %}
+	<p><strong>{{ msg.sender }}:</strong> {{ msg.message }}</p>
+	{% endfor %}
+</div>
+<input type="text" id="message-input" placeholder="Type a message..." />
+<button onclick="sendMessage()">Send</button>
+
+<script>
+	function sendMessage() {
+		const message = document.getElementById("message-input").value;
+		fetch("/send_message/", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				"X-CSRFToken": "{{ csrf_token }}",
+			},
+			body: JSON.stringify({ receiver: "{{ receiver }}", message: message }),
+		})
+			.then((response) => response.json())
+			.then((data) => {
+				alert(data.message);
+				document.getElementById("message-input").value = "";
+			});
+	}
+</script>
