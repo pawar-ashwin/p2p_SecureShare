@@ -58,10 +58,14 @@
 			<div class="file-tile">
 				<p><strong>{{ file.username }}</strong></p>
 				<p>{{ file.file }}</p>
+				<button onclick="requestFile('{{ file.username }}', '{{ file.file }}')">
+					Request
+				</button>
+				<button onclick="openChat('{{ file.username }}')">Chat</button>
 			</div>
 			{% endfor %} {% endif %}
 		</div>
-		<div class="file-tiles">
+		<!-- <div class="file-tiles">
 			{% for file in popular_files %}
 			<div class="file-tile">
 				<p>{{ file.file }}</p>
@@ -72,7 +76,7 @@
 				<button onclick="openChat('{{ file.username }}')">Chat</button>
 			</div>
 			{% endfor %}
-		</div>
+		</div> -->
 		<script>
 			function requestFile(owner, filename) {
 				fetch(`/request_file/`, {
