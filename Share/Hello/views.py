@@ -12,6 +12,8 @@ from django.views.decorators.http import require_GET
 from django.utils.html import escape
 from django.views.decorators.csrf import csrf_exempt
 import json
+from django.shortcuts import redirect
+from django.contrib import messages
 
 # MongoDB connection setup
 mongo_uri = "mongodb+srv://sowmyamutya20:hyB1Mq5ODLBssNDl@logincredentials.oalqb.mongodb.net/?retryWrites=true&w=majority&appName=loginCredentials"
@@ -76,6 +78,7 @@ def login(request):
         if user:
             request.session['username'] = username  # Store the username in the session
             messages.success(request, 'Login successful!')
+            print("Message set: Login successful!") 
             return redirect('user_dashboard')  # Redirect to the user dashboard after login
         else:
             messages.error(request, 'Invalid credentials! Please try again.')
@@ -226,6 +229,8 @@ def popular_files():
 def search_files(request):
     if 'username' in request.session:
         username_main = request.session['username']
+        user_main = users_collection.find_one({"username": username_main})
+        share_path_main = user_main.get('share_path', '')
         query = request.GET.get('query', '').strip()  # Get the search query
         query = escape(query)  # Escape to prevent XSS
 
@@ -234,7 +239,7 @@ def search_files(request):
         for user in users_collection.find({}):
             username = user['username']
             share_path = user.get('share_path', '')
-            print("I AM COMING HERE!");
+            # print("I AM COMING HERE!");
             if share_path and os.path.isdir(share_path):
                 try:
                     # Filter files that match the query
@@ -245,7 +250,7 @@ def search_files(request):
                     print(f"Error accessing files for {username}: {e}")
                     continue
 
-        return render(request, 'user.html', {'search_results': search_results, 'query': query, 'username': username_main, 'share_path': share_path})
+        return render(request, 'user.html', {'search_results': search_results, 'query': query, 'username': username_main, 'share_path': share_path_main})
     else:
         return redirect('home')
     
@@ -301,3 +306,14 @@ def send_message(request):
 
         return JsonResponse({'message': 'Message sent!'})
 
+
+#signout API
+def signout(request):
+    # Clear the session to log the user out
+    request.session.flush()
+
+    # display logout message
+    messages.success(request, 'You have successfully logged out.')
+
+    # Redirect to the home page
+    return redirect('home')

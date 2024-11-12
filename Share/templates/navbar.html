@@ -132,7 +132,7 @@
 				<div class="dropdown" id="profileDropdown">
 					<a href="{% url 'user_profile' %}">Profile</a>
 					<a href="{% url 'my_files' %}">My Files</a>
-					<a href="#signout">Sign Out</a>
+					<a href="{% url 'signout' %}">Sign Out</a>
 				</div>
 				{% if not share_path %}
 				<button

@@ -24,6 +24,39 @@
 			.file-tile:hover {
 				transform: translateY(-5px); /* Slight lift on hover */
 			}
+
+			/* Base styling for both buttons */
+			.classic-button {
+				background-color: #f8f4e1; /* Cream background for warmth and elegance */
+				color: #333; /* Charcoal text for high contrast and readability */
+				border: 1px solid #b8b8b8; /* Light grey border for subtle definition */
+				padding: 10px 20px; /* Comfortable padding */
+				font-family: "Georgia", serif; /* Serif font for a refined, classic feel */
+				font-size: 16px; /* Moderate text size */
+				text-transform: uppercase; /* Uppercase text for a formal touch */
+				cursor: pointer; /* Pointer cursor on hover */
+				border-radius: 5px; /* Slightly rounded corners */
+				transition: all 0.3s ease; /* Smooth transition for hover effects */
+			}
+
+			/* Button hover effect */
+			.classic-button:hover {
+				background-color: #f0e6c3; /* Slightly darker cream for hover effect */
+				border-color: #9e9e9e; /* Darker border on hover */
+				color: #1c1c1c; /* Darker text on hover for emphasis */
+			}
+
+			/* Button focus effect */
+			.classic-button:focus {
+				outline: none; /* Removes the default focus outline */
+				box-shadow: 0 0 5px rgba(0, 0, 0, 0.15); /* Subtle dark shadow for focus */
+			}
+
+			/* Active state for buttons */
+			.classic-button:active {
+				background-color: #e0d5b9; /* Light olive tone for the pressed state */
+				border-color: #8c8c8c; /* Slightly darker border when active */
+			}
 		</style>
 	</head>
 	<body style="padding-top: 100px">
@@ -49,19 +82,35 @@
 			<div class="file-tile">
 				<p><strong>{{ file.username }}</strong></p>
 				<p>{{ file.file }}</p>
-				<button onclick="requestFile('{{ file.username }}', '{{ file.file }}')">
+				<button
+					class="classic-button"
+					onclick="requestFile('{{ file.username }}', '{{ file.file }}')"
+				>
 					Request
 				</button>
-				<button onclick="openChat('{{ file.username }}')">Chat</button>
+				<button
+					class="classic-button"
+					onclick="openChat('{{ file.username }}')"
+				>
+					Chat
+				</button>
 			</div>
 			{% endfor %} {% else %} {% for file in popular_files %}
 			<div class="file-tile">
 				<p><strong>{{ file.username }}</strong></p>
 				<p>{{ file.file }}</p>
-				<button onclick="requestFile('{{ file.username }}', '{{ file.file }}')">
+				<button
+					class="classic-button"
+					onclick="requestFile('{{ file.username }}', '{{ file.file }}')"
+				>
 					Request
 				</button>
-				<button onclick="openChat('{{ file.username }}')">Chat</button>
+				<button
+					class="classic-button"
+					onclick="openChat('{{ file.username }}')"
+				>
+					Chat
+				</button>
 			</div>
 			{% endfor %} {% endif %}
 		</div>

@@ -1,7 +1,7 @@
 # urls.py
 
 from django.urls import path
-from .views import HomePage, AboutPage, signup, user_dashboard, login, user_profile, update_email, update_share_path, my_files, search_files, request_file, chat_view, send_message, file_requests
+from .views import HomePage, AboutPage, signup, user_dashboard, login, user_profile, update_email, update_share_path, my_files, search_files, request_file, chat_view, send_message, file_requests, signout
 
 urlpatterns = [
     path('', HomePage.as_view(), name='home'),
@@ -18,4 +18,5 @@ urlpatterns = [
     path('file_requests/', file_requests, name='file_requests'),
     path('chat/<str:username>/', chat_view, name='chat'),
     path('send_message/', send_message, name='send_message'),
+    path('signout/', signout, name='signout'),
 ]
