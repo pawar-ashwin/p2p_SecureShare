@@ -1,0 +1,13 @@
+<h1>Message from {{ message.sender.username }}</h1>
+<p>{{ message.content }}</p>
+<p><strong>Sent on:</strong> {{ message.timestamp }}</p>
+<p><a href="{% url 'reply_to_message' message.id %}">Reply</a></p>
+
+<h2>Replies:</h2>
+<ul>
+{% for reply in replies %}
+    <li>
+        {{ reply.sender.username }}: {{ reply.content }} (Sent on: {{ reply.timestamp }})
+    </li>
+{% endfor %}
+</ul>

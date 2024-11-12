@@ -1,0 +1,11 @@
+<h1>Your Inbox</h1>
+<ul>
+{% for message in messages %}
+    <li>
+        <a href="{% url 'view_message' message.id %}">
+            {% if message.is_read %} (Read) {% else %} (Unread) {% endif %}
+            - From: {{ message.sender.username }} - {{ message.timestamp }}
+        </a>
+    </li>
+{% endfor %}
+</ul>

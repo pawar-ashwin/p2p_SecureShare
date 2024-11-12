@@ -1,245 +1,102 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-		<style>
-			body {
-				font-family: Arial, sans-serif;
-				margin: 0;
-				padding: 0;
-				background-color: #f0f4f7;
-				box-sizing: border-box;
-			}
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <style>
+    /* Existing styles... */
+    /* Add any additional styles for your buttons or links here */
+  </style>
+</head>
+<body>
+  <div class="top-bar">
+    <div class="iconName">
+      <img src="image.png" alt="App Icon" />
+      <h2>
+        <a href="{% url 'user_dashboard' %}" style="text-decoration: none; color: white">P2P Secure Share</a>
+      </h2>
+    </div>
+    <div class="search-bar">
+      <form action="{% url 'search_files' %}" method="get" style="display: inline">
+        <input type="text" name="query" placeholder="Search for files..." />
+        <button type="submit" style="display: none"></button>
+      </form>
+    </div>
+    <div class="profile-section">
+      <div class="profile-icon" id="profileToggle">
+        <canvas id="identiconCanvas" width="35" height="35" style="display: none"></canvas>
+        <img id="identiconImage" alt="User Profile Icon" />
+        <span id="username">{{ username }}</span>
+      </div>
+      <div class="dropdown" id="profileDropdown">
+        <a href="{% url 'user_profile' %}">Profile</a>
+        <a href="{% url 'my_files' %}">My Files</a>
+        <a href="#signout">Sign Out</a>
+        <a href="{% url 'inbox' %}">Inbox</a>  <!-- Link to view messages -->
+        <a href="{% url 'send_message' %}">Send Message</a>  <!-- Link to send message -->
+      </div>
+    </div>
+    <div class="notifications">
+      <a href="{% url 'file_requests' %}">
+        <span id="file-requests-count">File Requests ({{ file_requests_count }})</span>
+      </a>
+      <a href="{% url 'chat' username=username %}">
+        <span id="chats-count">Chats ({{ chat_count }})</span>
+      </a>
+    </div>
+  </div>
 
-			.container {
-				max-width: 1000px;
-				margin: 0 auto;
-				padding: 20px;
-			}
+  <script>
+    // JavaScript for identicon, dropdown, etc...
+    function md5Hash(string) {
+      return CryptoJS.MD5(string).toString(CryptoJS.enc.Hex);
+    }
 
-			.top-bar {
-				position: fixed;
-				width: 100%;
-				display: flex;
-				justify-content: space-between;
-				align-items: center;
-				padding: 10px 20px;
-				background-color: #333;
-				color: white;
-				top: 0;
-				left: 0;
-				box-sizing: border-box;
-			}
+    function generateIdenticon(userId, size = 35) {
+      const userHash = md5Hash(userId);
+      const color = `#${userHash.slice(0, 6)}`;
+      const canvas = document.getElementById("identiconCanvas");
+      const context = canvas.getContext("2d");
+      const gridSize = 5;
+      const squareSize = size / gridSize;
 
-			.top-bar img {
-				width: 40px; /* Adjust the size of the icon */
-				height: 40px; /* Adjust the size of the icon */
-				margin-right: 10px; /* Space between icon and text */
-			}
+      let pattern = Array.from(
+        { length: gridSize * Math.ceil(gridSize / 2) },
+        (_, i) => parseInt(userHash[i], 16) % 2
+      );
 
-			.search-bar input[type="text"] {
-				padding: 8px;
-				width: 500px;
-				border-radius: 5px;
-				border: 1px solid #ccc;
-			}
+      context.clearRect(0, 0, size, size);
+      context.fillStyle = color;
 
-			.profile-section {
-				position: relative;
-				display: inline-block;
-			}
+      for (let y = 0; y < gridSize; y++) {
+        for (let x = 0; x < Math.ceil(gridSize / 2); x++) {
+          if (pattern[y * Math.ceil(gridSize / 2) + x] === 1) {
+            context.fillRect(x * squareSize, y * squareSize, squareSize, squareSize);
+            context.fillRect((gridSize - x - 1) * squareSize, y * squareSize, squareSize, squareSize);
+          }
+        }
+      }
 
-			.profile-icon {
-				cursor: pointer;
-				font-size: 1.2rem;
-				display: flex;
-				align-items: center;
-				gap: 10px;
-			}
+      const img = document.getElementById("identiconImage");
+      img.src = canvas.toDataURL("image/png");
+    }
 
-			.profile-icon img {
-				width: 35px;
-				height: 35px;
-				border-radius: 50%;
-				border: 2px solid #f0a500;
-			}
+    const userId = document.querySelector("#username").textContent;
+    generateIdenticon(userId);
 
-			.dropdown {
-				display: none;
-				position: absolute;
-				top: 50px;
-				right: 0;
-				background-color: white;
-				box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-				border-radius: 5px;
-				overflow: hidden;
-				min-width: 150px;
-				z-index: 1000;
-			}
+    const profileToggle = document.getElementById("profileToggle");
+    const profileDropdown = document.getElementById("profileDropdown");
 
-			.dropdown a {
-				display: block;
-				padding: 10px;
-				text-decoration: none;
-				color: #333;
-				font-size: 1rem;
-			}
+    profileToggle.addEventListener("click", function () {
+      profileDropdown.style.display = profileDropdown.style.display === "block" ? "none" : "block";
+    });
 
-			.dropdown a:hover {
-				background-color: #f0f4f7;
-			}
-
-			.iconName {
-				display: flex;
-			}
-		</style>
-	</head>
-	<body>
-		<div class="top-bar">
-			<div class="iconName">
-				<img src="image.png" alt="App Icon" />
-				<h2>
-					<a
-						href="{% url 'user_dashboard' %}"
-						style="text-decoration: none; color: white"
-						>P2P Secure Share</a
-					>
-				</h2>
-			</div>
-			<div class="search-bar">
-				<form
-					action="{% url 'search_files' %}"
-					method="get"
-					style="display: inline"
-				>
-					<input type="text" name="query" placeholder="Search for files..." />
-					<button type="submit" style="display: none"></button>
-				</form>
-			</div>
-			<div class="profile-section">
-				<div class="profile-icon" id="profileToggle">
-					<canvas
-						id="identiconCanvas"
-						width="35"
-						height="35"
-						style="display: none"
-					></canvas>
-					<img id="identiconImage" alt="User Profile Icon" />
-					<span id="username">{{ username }}</span>
-				</div>
-				<div class="dropdown" id="profileDropdown">
-					<a href="{% url 'user_profile' %}">Profile</a>
-					<a href="{% url 'my_files' %}">My Files</a>
-					<a href="#signout">Sign Out</a>
-				</div>
-				{% if not share_path %}
-				<button
-					id="sharePathPrompt"
-					style="
-						position: absolute;
-						left: -28px;
-						top: 38px;
-						background-color: red;
-						color: white;
-						padding: 5px 10px;
-						border: none;
-						border-radius: 5px;
-						font-size: 14px;
-						cursor: pointer;
-						box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-					"
-				>
-					+ share path
-				</button>
-				{% endif %}
-			</div>
-			<div class="notifications">
-				<a href="{% url 'file_requests' %}">
-					<span id="file-requests-count"
-						>File Requests ({{ file_requests_count }})</span
-					>
-				</a>
-				<a href="{% url 'chat' username=username%}">
-					<span id="chats-count">Chats ({{ chat_count }})</span>
-				</a>
-			</div>
-		</div>
-
-		<script>
-			// JavaScript code for identicon, dropdown, and share path prompt
-			function md5Hash(string) {
-				return CryptoJS.MD5(string).toString(CryptoJS.enc.Hex);
-			}
-
-			function generateIdenticon(userId, size = 35) {
-				const userHash = md5Hash(userId);
-				const color = `#${userHash.slice(0, 6)}`;
-				const canvas = document.getElementById("identiconCanvas");
-				const context = canvas.getContext("2d");
-				const gridSize = 5;
-				const squareSize = size / gridSize;
-
-				let pattern = Array.from(
-					{ length: gridSize * Math.ceil(gridSize / 2) },
-					(_, i) => parseInt(userHash[i], 16) % 2
-				);
-
-				context.clearRect(0, 0, size, size);
-				context.fillStyle = color;
-
-				for (let y = 0; y < gridSize; y++) {
-					for (let x = 0; x < Math.ceil(gridSize / 2); x++) {
-						if (pattern[y * Math.ceil(gridSize / 2) + x] === 1) {
-							context.fillRect(
-								x * squareSize,
-								y * squareSize,
-								squareSize,
-								squareSize
-							);
-							context.fillRect(
-								(gridSize - x - 1) * squareSize,
-								y * squareSize,
-								squareSize,
-								squareSize
-							);
-						}
-					}
-				}
-
-				const img = document.getElementById("identiconImage");
-				img.src = canvas.toDataURL("image/png");
-			}
-
-			const userId = document.querySelector("#username").textContent;
-			generateIdenticon(userId);
-
-			const profileToggle = document.getElementById("profileToggle");
-			const profileDropdown = document.getElementById("profileDropdown");
-
-			profileToggle.addEventListener("click", function () {
-				profileDropdown.style.display =
-					profileDropdown.style.display === "block" ? "none" : "block";
-			});
-
-			window.addEventListener("click", function (event) {
-				if (!profileToggle.contains(event.target)) {
-					profileDropdown.style.display = "none";
-				}
-			});
-
-			document.addEventListener("DOMContentLoaded", function () {
-				const sharePathPrompt = document.getElementById("sharePathPrompt");
-				if (sharePathPrompt) {
-					sharePathPrompt.addEventListener("click", function () {
-						const newSharePath = prompt("Please enter your share path:");
-						if (newSharePath) {
-							updateSharePath(newSharePath);
-						}
-					});
-				}
-			});
-		</script>
-	</body>
+    window.addEventListener("click", function (event) {
+      if (!profileToggle.contains(event.target)) {
+        profileDropdown.style.display = "none";
+      }
+    });
+  </script>
+</body>
 </html>

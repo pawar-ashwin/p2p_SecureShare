@@ -2,6 +2,7 @@
 
 from django.urls import path
 from .views import HomePage, AboutPage, signup, user_dashboard, login, user_profile, update_email, update_share_path, my_files, search_files, request_file, chat_view, send_message, file_requests
+from . import views
 
 urlpatterns = [
     path('', HomePage.as_view(), name='home'),
@@ -18,4 +19,8 @@ urlpatterns = [
     path('file_requests/', file_requests, name='file_requests'),
     path('chat/<str:username>/', chat_view, name='chat'),
     path('send_message/', send_message, name='send_message'),
+    path('send_message/<int:receiver_id>/', views.send_message, name='send_message'),
+    path('inbox/', views.inbox, name='inbox'),
+    path('message/<int:message_id>/', views.view_message, name='view_message'),
+    path('message/reply/<int:message_id>/', views.reply_to_message, name='reply_to_message'),
 ]

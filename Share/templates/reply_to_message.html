@@ -1,0 +1,6 @@
+<h1>Reply to Message</h1>
+<form method="POST">
+    {% csrf_token %}
+    <textarea name="content" required></textarea><br>
+    <button type="submit">Reply</button>
+</form>

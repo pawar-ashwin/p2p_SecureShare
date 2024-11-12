@@ -12,6 +12,10 @@ from django.views.decorators.http import require_GET
 from django.utils.html import escape
 from django.views.decorators.csrf import csrf_exempt
 import json
+from django.contrib.auth.decorators import login_required
+from .models import Message
+from django.http import Http404
+
 
 # MongoDB connection setup
 mongo_uri = "mongodb+srv://sowmyamutya20:hyB1Mq5ODLBssNDl@logincredentials.oalqb.mongodb.net/?retryWrites=true&w=majority&appName=loginCredentials"
@@ -301,3 +305,62 @@ def send_message(request):
 
         return JsonResponse({'message': 'Message sent!'})
 
+
+
+@login_required
+def send_message(request, receiver_id):
+    receiver = User.objects.get(id=receiver_id)
+    
+    if request.method == 'POST':
+        content = request.POST['content']
+        Message.objects.create(
+            sender=request.user,
+            receiver=receiver,
+            content=content
+        )
+        return redirect('inbox')  # Redirect to inbox after sending the message
+    
+    return render(request, 'hello/send_message.html', {'receiver': receiver})
+
+@login_required
+def inbox(request):
+    # Get all messages for the logged-in user
+    messages = Message.objects.filter(receiver=request.user).order_by('-timestamp')
+    return render(request, 'hello/inbox.html', {'messages': messages})
+
+@login_required
+def view_message(request, message_id):
+    # Retrieve a specific message
+    try:
+        message = Message.objects.get(id=message_id, receiver=request.user)
+    except Message.DoesNotExist:
+        raise Http404("Message not found")
+
+    # Mark the message as read
+    message.is_read = True
+    message.save()
+
+    # Get replies to this message if any
+    replies = message.replies.all()
+
+    return render(request, 'hello/view_message.html', {'message': message, 'replies': replies})
+
+@login_required
+def reply_to_message(request, message_id):
+    try:
+        original_message = Message.objects.get(id=message_id, receiver=request.user)
+    except Message.DoesNotExist:
+        raise Http404("Message not found")
+
+    if request.method == 'POST':
+        content = request.POST['content']
+        # Create a reply
+        Message.objects.create(
+            sender=request.user,
+            receiver=original_message.sender,
+            content=content,
+            parent_message=original_message
+        )
+        return redirect('inbox')
+    
+    return render(request, 'hello/reply_to_message.html', {'message': original_message})
