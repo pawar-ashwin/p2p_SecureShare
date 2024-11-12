@@ -217,8 +217,16 @@ def popular_files():
     all_files = []
     all_users = users_collection.find({"share_path": {"$ne": ""}})  # Users with non-empty share paths
 
+    # for i in all_users:
+    #     print(i['username'])
+    #     print()
+    #     print(i['My_files'])
+    #     print("=====================================================")
+
+
     for user in all_users:
-        user_files_from_db = user.get("My_files", "")
+        user_files_from_db = user.get("My_files", [])
+        print(user_files_from_db)
         
         # Verify the path exists and is a directory
         if user_files_from_db:
@@ -247,11 +255,12 @@ def search_files(request):
         for user in users_collection.find({}):
             username = user['username']
             share_path = user.get('share_path', '')
+            files_from_db = user.get('My_files', [])
             # print("I AM COMING HERE!");
-            if share_path and os.path.isdir(share_path):
+            if files_from_db:
                 try:
                     # Filter files that match the query
-                    files = [f for f in os.listdir(share_path) if query.lower() in f.lower()]
+                    files = [f for f in files_from_db if query.lower() in f.lower()]
                     for file_name in files:
                         search_results.append({'username': username, 'file': file_name, "share_path" : share_path})
                 except Exception as e:
