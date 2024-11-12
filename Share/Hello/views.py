@@ -229,6 +229,8 @@ def popular_files():
 def search_files(request):
     if 'username' in request.session:
         username_main = request.session['username']
+        user_main = users_collection.find_one({"username": username_main})
+        share_path_main = user_main.get('share_path', '')
         query = request.GET.get('query', '').strip()  # Get the search query
         query = escape(query)  # Escape to prevent XSS
 
@@ -237,7 +239,7 @@ def search_files(request):
         for user in users_collection.find({}):
             username = user['username']
             share_path = user.get('share_path', '')
-            print("I AM COMING HERE!");
+            # print("I AM COMING HERE!");
             if share_path and os.path.isdir(share_path):
                 try:
                     # Filter files that match the query
@@ -248,7 +250,7 @@ def search_files(request):
                     print(f"Error accessing files for {username}: {e}")
                     continue
 
-        return render(request, 'user.html', {'search_results': search_results, 'query': query, 'username': username_main, 'share_path': share_path})
+        return render(request, 'user.html', {'search_results': search_results, 'query': query, 'username': username_main, 'share_path': share_path_main})
     else:
         return redirect('home')
     
