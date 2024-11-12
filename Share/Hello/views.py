@@ -55,7 +55,8 @@ def signup(request):
                 'email': new_email,
                 'username': new_username,
                 'password': new_password,  # Ideally, hash the password before storing
-                'share_path' : ''
+                'share_path' : '',
+                'My_files':[]
             })
             print("Insertion result:", result)
             messages.success(request, 'Signup successful! You can now log in.')
@@ -193,6 +194,13 @@ def my_files(request):
             try:
                 # List all files in the share path directory
                 files = os.listdir(share_path)
+                user_files = user.get('My_files', [])
+                for i in files:
+                    user_files.append(i)
+                users_collection.update_one(
+                    {"username": username},
+                    {"$set": {"My_files": user_files}}
+                )
             except Exception as e:
                 messages.error(request, f"Error accessing files: {e}")
         else:
@@ -210,16 +218,16 @@ def popular_files():
     all_users = users_collection.find({"share_path": {"$ne": ""}})  # Users with non-empty share paths
 
     for user in all_users:
-        share_path = user.get("share_path", "")
+        user_files_from_db = user.get("My_files", "")
         
         # Verify the path exists and is a directory
-        if share_path and os.path.isdir(share_path):
+        if user_files_from_db:
             try:
                 # Get all files in the user's share path
-                user_files = os.listdir(share_path)
+                user_files = user_files_from_db
                 all_files.extend([{"username": user["username"], "file": file} for file in user_files])
             except Exception as e:
-                print(f"Error accessing files in {share_path}: {e}")
+                print(f"Error accessing files in {user_files_from_db}: {e}")
     
     # Randomly select up to 10 files for display
     random_files = random.sample(all_files, min(len(all_files), 12))
