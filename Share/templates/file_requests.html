@@ -1,20 +1,55 @@
 <h2>File Requests</h2>
 <ul>
-	{% for request in requests %}
-	<li>
-		{{ request.requester }} requested {{ request.filename }}
-		<button onclick="approveRequest('{{ request._id }}')">Approve</button>
-		<button onclick="declineRequest('{{ request._id }}')">Decline</button>
-	</li>
-	{% endfor %}
+    {% for request in requests %}
+    <li>
+        {{ request.requester }} requested {{ request.filename }}
+        <button onclick="approveRequest('{{ request.request_id }}')">Approve</button>
+        <button onclick="declineRequest('{{ request.request_id }}')">Decline</button>
+    </li>
+    {% endfor %}
 </ul>
 
 <script>
-	function approveRequest(requestId) {
-		// Code to approve request
-	}
+    function approveRequest(requestId) {
+        fetch('/approve_request/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ request_id: requestId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert('Request approved!');
+                location.reload();  // Reload the page to update the request list
+            } else {
+                alert('Failed to approve request: ' + data.message);
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
 
-	function declineRequest(requestId) {
-		// Code to decline request
-	}
+    function declineRequest(requestId) {
+        fetch('/decline_request/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ request_id: requestId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert('Request declined!');
+                location.reload();  // Reload the page to update the request list
+            } else {
+                alert('Failed to decline request: ' + data.message);
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
 </script>
+

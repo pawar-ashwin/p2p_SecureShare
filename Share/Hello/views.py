@@ -10,10 +10,12 @@ from django.http import JsonResponse
 import random
 from django.views.decorators.http import require_GET
 from django.utils.html import escape
+from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 import json
 from django.shortcuts import redirect
 from django.contrib import messages
+from bson import ObjectId
 
 # MongoDB connection setup
 mongo_uri = "mongodb+srv://sowmyamutya20:hyB1Mq5ODLBssNDl@logincredentials.oalqb.mongodb.net/?retryWrites=true&w=majority&appName=loginCredentials"
@@ -309,10 +311,25 @@ def request_file(request):
         return JsonResponse({'message': 'File request sent successfully!'})
 
 def file_requests(request):
-    username = request.session['username']
-    requests = db.file_requests.find({'owner': username, 'status': 'Pending'})
+    if 'username' in request.session:
+        username = request.session['username']
+        requests_cursor = db.file_requests.find({'owner': username, 'status': 'Pending'})
+        
+        # Convert MongoDB cursor to list, renaming `_id` to `request_id`
+        requests = [
+            {
+                "request_id": str(req["_id"]),  # Rename `_id` to `request_id`
+                "requester": req["requester"],
+                "filename": req["filename"]
+            }
+            for req in requests_cursor
+        ]
 
-    return render(request, 'file_requests.html', {'requests': requests})
+        # Pass the modified requests list to the template
+        return render(request, 'file_requests.html', {'requests': requests})
+    else:
+        return redirect('home')
+
 
 def chat_view(request, username):
     current_user = request.session['username']
@@ -353,3 +370,31 @@ def signout(request):
 
     # Redirect to the home page
     return redirect('home')
+
+@csrf_exempt
+@require_POST
+def approve_request(request):
+    data = json.loads(request.body)
+    request_id = data.get('request_id')
+
+    if request_id:
+        db.file_requests.update_one(
+            {'_id': ObjectId(request_id)},
+            {'$set': {'status': 'Approved'}}
+        )
+        return JsonResponse({'status': 'success', 'message': 'Request approved.'})
+    return JsonResponse({'status': 'error', 'message': 'Invalid request ID.'})
+
+@csrf_exempt
+@require_POST
+def decline_request(request):
+    data = json.loads(request.body)
+    request_id = data.get('request_id')
+
+    if request_id:
+        db.file_requests.update_one(
+            {'_id': ObjectId(request_id)},
+            {'$set': {'status': 'Declined'}}
+        )
+        return JsonResponse({'status': 'success', 'message': 'Request declined.'})
+    return JsonResponse({'status': 'error', 'message': 'Invalid request ID.'})
