@@ -1,51 +1,70 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Chat Room</title>
     {% load static %}
-    <script src="{% static 'chat.js' %}"></script>
-</head>
-<body>
+    <script></script>
+  </head>
+  <body>
     <h2>Chat with {{ receiver }}</h2>
 
     <!-- Message list -->
     <ul id="message-list">
-        {% for message in messages %}
-            <li>{{ message.sender.username }}: {{ message.content }} ({{ message.timestamp }})</li>
-        {% endfor %}
+      {% for message in messages %}
+      <li>
+        {{ message.sender.username }}: {{ message.content }} ({{
+        message.timestamp }})
+      </li>
+      {% endfor %}
     </ul>
 
     <!-- Message input and send button -->
-    <input id="chat-message-input" type="text" placeholder="Type your message...">
+    <input
+      id="chat-message-input"
+      type="text"
+      placeholder="Type your message..."
+    />
     <button id="chat-message-submit">Send</button>
 
     <script>
-        const roomName = "{{ receiver.username }}";  // The room name is set to the receiver's username
-        const chatSocket = new WebSocket(
-            'ws://' + window.location.host + '/ws/chat/' + roomName + '/'
+      const roomName = "{{ receiver }}"; // The room name is set to the receiver's username
+      const chatSocket = new WebSocket(
+        "ws://" + window.location.host + "/ws/chat/" + roomName + "/"
+      );
+
+      chatSocket.onmessage = function (e) {
+        const data = JSON.parse(e.data);
+        const messageList = document.getElementById("message-list");
+        const messageItem = document.createElement("li");
+        messageItem.textContent = `${data.sender}: ${data.message} (${new Date(
+          data.timestamp
+        ).toLocaleString()})`;
+        messageList.appendChild(messageItem);
+      };
+
+      chatSocket.onclose = function (e) {
+        console.error("Chat socket closed unexpectedly");
+      };
+
+      document.querySelector("#chat-message-input").focus();
+      document.querySelector("#chat-message-input").onkeyup = function (e) {
+        if (e.keyCode === 13) {
+          // Enter key
+          document.querySelector("#chat-message-submit").click();
+        }
+      };
+
+      document.querySelector("#chat-message-submit").onclick = function (e) {
+        const messageInputDom = document.querySelector("#chat-message-input");
+        const message = messageInputDom.value;
+        chatSocket.send(
+          JSON.stringify({
+            message: message,
+          })
         );
-
-        chatSocket.onmessage = function(e) {
-            const data = JSON.parse(e.data);
-            const messageList = document.getElementById('message-list');
-            const newMessage = document.createElement('li');
-            newMessage.textContent = data.sender + ': ' + data.message + ' (' + data.timestamp + ')';
-            messageList.appendChild(newMessage);
-        };
-
-        chatSocket.onclose = function(e) {
-            console.error('Chat socket closed unexpectedly');
-        };
-
-        document.querySelector('#chat-message-submit').onclick = function(e) {
-            const messageInputDom = document.querySelector('#chat-message-input');
-            const message = messageInputDom.value;
-            chatSocket.send(JSON.stringify({
-                'message': message
-            }));
-            messageInputDom.value = '';  // Clear the input field after sending
-        };
+        messageInputDom.value = "";
+      };
     </script>
-</body>
+  </body>
 </html>
