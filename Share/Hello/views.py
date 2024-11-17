@@ -10,10 +10,12 @@ from django.http import JsonResponse
 import random
 from django.views.decorators.http import require_GET
 from django.utils.html import escape
+from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 import json
 from django.shortcuts import redirect
 from django.contrib import messages
+from bson import ObjectId
 
 # MongoDB connection setup
 mongo_uri = "mongodb+srv://sowmyamutya20:hyB1Mq5ODLBssNDl@logincredentials.oalqb.mongodb.net/?retryWrites=true&w=majority&appName=loginCredentials"
@@ -189,18 +191,35 @@ def my_files(request):
         user = users_collection.find_one({"username": username})
         share_path = user.get('share_path', '')
 
+        # Initialize an empty list to store files from the directory
         files = []
+
         if share_path and os.path.isdir(share_path):
             try:
                 # List all files in the share path directory
-                files = os.listdir(share_path)
-                user_files = user.get('My_files', [])
-                for i in files:
-                    user_files.append(i)
-                users_collection.update_one(
-                    {"username": username},
-                    {"$set": {"My_files": user_files}}
-                )
+                current_files = set(os.listdir(share_path))
+
+                # Get the files already stored in the database
+                stored_files = set(user.get('My_files', []))
+
+                # Identify new files by subtracting stored files from current files
+                new_files = current_files - stored_files
+
+                # If new files are found, update the user's My_files in MongoDB
+                if new_files:
+                    # Combine the existing and new files without duplicates
+                    updated_files_list = list(stored_files | new_files)
+                    users_collection.update_one(
+                        {"username": username},
+                        {"$set": {"My_files": updated_files_list}}
+                    )
+                else:
+                    # If no new files, keep the existing stored files
+                    updated_files_list = list(stored_files)
+
+                # Use the updated or existing My_files list to render the view
+                files = updated_files_list
+
             except Exception as e:
                 messages.error(request, f"Error accessing files: {e}")
         else:
@@ -209,6 +228,8 @@ def my_files(request):
         return render(request, 'userfiles.html', {'files': files, 'username': username, 'share_path': share_path})
     else:
         return redirect('home')
+
+
 
 def popular_files():
     """
@@ -290,10 +311,25 @@ def request_file(request):
         return JsonResponse({'message': 'File request sent successfully!'})
 
 def file_requests(request):
-    username = request.session['username']
-    requests = db.file_requests.find({'owner': username, 'status': 'Pending'})
+    if 'username' in request.session:
+        username = request.session['username']
+        requests_cursor = db.file_requests.find({'owner': username, 'status': 'Pending'})
+        
+        # Convert MongoDB cursor to list, renaming `_id` to `request_id`
+        requests = [
+            {
+                "request_id": str(req["_id"]),  # Rename `_id` to `request_id`
+                "requester": req["requester"],
+                "filename": req["filename"]
+            }
+            for req in requests_cursor
+        ]
 
-    return render(request, 'file_requests.html', {'requests': requests})
+        # Pass the modified requests list to the template
+        return render(request, 'file_requests.html', {'requests': requests})
+    else:
+        return redirect('home')
+
 
 def chat_view(request, username):
     current_user = request.session['username']
@@ -334,3 +370,31 @@ def signout(request):
 
     # Redirect to the home page
     return redirect('home')
+
+@csrf_exempt
+@require_POST
+def approve_request(request):
+    data = json.loads(request.body)
+    request_id = data.get('request_id')
+
+    if request_id:
+        db.file_requests.update_one(
+            {'_id': ObjectId(request_id)},
+            {'$set': {'status': 'Approved'}}
+        )
+        return JsonResponse({'status': 'success', 'message': 'Request approved.'})
+    return JsonResponse({'status': 'error', 'message': 'Invalid request ID.'})
+
+@csrf_exempt
+@require_POST
+def decline_request(request):
+    data = json.loads(request.body)
+    request_id = data.get('request_id')
+
+    if request_id:
+        db.file_requests.update_one(
+            {'_id': ObjectId(request_id)},
+            {'$set': {'status': 'Declined'}}
+        )
+        return JsonResponse({'status': 'success', 'message': 'Request declined.'})
+    return JsonResponse({'status': 'error', 'message': 'Invalid request ID.'})

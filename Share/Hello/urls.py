@@ -1,7 +1,8 @@
 # urls.py
 
 from django.urls import path
-from .views import HomePage, AboutPage, signup, user_dashboard, login, user_profile, update_email, update_share_path, my_files, search_files, request_file, chat_view, send_message, file_requests, signout
+from .views import HomePage, AboutPage, signup, user_dashboard, login, user_profile, update_email, update_share_path, my_files, search_files, request_file, chat_view, send_message, file_requests, signout, approve_request, decline_request
+from . import views
 
 urlpatterns = [
     path('', HomePage.as_view(), name='home'),
@@ -19,4 +20,6 @@ urlpatterns = [
     path('chat/<str:username>/', chat_view, name='chat'),
     path('send_message/', send_message, name='send_message'),
     path('signout/', signout, name='signout'),
+    path('approve_request/', views.approve_request, name='approve_request'),
+    path('decline_request/', views.decline_request, name='decline_request'),
 ]
