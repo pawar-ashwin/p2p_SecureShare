@@ -1,8 +1,9 @@
 from channels.generic.websocket import AsyncWebsocketConsumer
 import json
-from utils.db import get_collection
 from datetime import datetime
+from utils.db import get_collection
 
+# Access the `messages` collection from the `users` database
 messages_collection = get_collection('users', 'messages')
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -30,7 +31,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         sender = self.scope['user'].username  # The current user
         receiver = self.room_name
 
-        # Store the message in the database
+        # Store the message in the database (MongoDB or SQL)
         messages_collection.insert_one({
             'sender': sender,
             'receiver': receiver,
@@ -38,7 +39,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             'timestamp': datetime.now()
         })
 
-        # Send message to room group
+        # Send the message to the room group (broadcasting it)
         await self.channel_layer.group_send(
             self.room_group_name,
             {
@@ -50,7 +51,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
 
     async def chat_message(self, event):
-        # Send message to WebSocket
+        # Send message to WebSocket (broadcasting the message to everyone in the group)
         await self.send(text_data=json.dumps({
             'message': event['message'],
             'sender': event['sender'],

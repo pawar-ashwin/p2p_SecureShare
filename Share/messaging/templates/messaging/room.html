@@ -1,70 +1,100 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Chat Room</title>
-    {% load static %}
-    <script></script>
-  </head>
-  <body>
-    <h2>Chat with {{ receiver }}</h2>
+<head>
+  <meta charset="UTF-8" />
+  <title>Chat Room</title>
+  <script></script>
+</head>
+<body>
+  <h2>Chat with {{ receiver }}</h2>
 
-    <!-- Message list -->
-    <ul id="message-list">
-      {% for message in messages %}
-      <li>
-        {{ message.sender.username }}: {{ message.content }} ({{
-        message.timestamp }})
+  <!-- Message list -->
+  <ul id="message-list">
+    {% for message in messages %}
+      <li class="message">
+        <!-- Check if the message is from the logged-in user -->
+        {% if message.sender.username == user.username %}
+          <!-- Display sent messages with a special class -->
+          <strong>You:</strong> {{ message.content }}
+        {% else %}
+          <!-- Display received messages with the sender's name -->
+          <strong>{{ message.receiver.username }}:</strong> {{ message.content }}
+        {% endif %}
+        <br />
+        <small>{{ message.timestamp|date:"Y-m-d H:i:s" }}</small>
       </li>
-      {% endfor %}
-    </ul>
+    {% empty %}
+      <li>No messages yet. Start the conversation!</li>
+    {% endfor %}
+  </ul>
 
-    <!-- Message input and send button -->
-    <input
-      id="chat-message-input"
-      type="text"
-      placeholder="Type your message..."
-    />
-    <button id="chat-message-submit">Send</button>
+  <!-- Message input and send button -->
+  <input
+    id="chat-message-input"
+    type="text"
+    placeholder="Type your message..."
+  />
+  <button id="chat-message-submit">Send</button>
 
-    <script>
-      const roomName = "{{ receiver }}"; // The room name is set to the receiver's username
-      const chatSocket = new WebSocket(
-        "ws://" + window.location.host + "/ws/chat/" + roomName + "/"
+  <script>
+    const roomName = "{{ receiver }}"; // The room name is set to the receiver's username
+    const chatSocket = new WebSocket(
+      "ws://" + window.location.host + "/ws/chat/" + roomName + "/"
+    );
+
+    // Handle incoming messages
+    chatSocket.onmessage = function (e) {
+      const data = JSON.parse(e.data);
+      const messageList = document.getElementById("message-list");
+
+      // Create a new list item for the incoming message
+      const messageItem = document.createElement("li");
+      messageItem.classList.add("message");
+
+      // Set the class depending on who sent the message
+      if (data.sender==="{{receiver}}") {
+        messageItem.classList.add("sender");
+        messageItem.innerHTML = `<strong>You:</strong> ${data.message}<br/><small>${new Date(data.timestamp).toLocaleString()}</small>`;
+      } else {
+        messageItem.classList.add("receiver");
+        messageItem.innerHTML = `<strong>${data.sender}:</strong> ${data.message}<br/><small>${new Date(data.timestamp).toLocaleString()}</small>`;
+      }
+
+      // Add the new message to the list
+      messageList.appendChild(messageItem);
+
+      // Scroll to the bottom of the message list
+      messageList.scrollTop = messageList.scrollHeight;
+    };
+
+    // Handle WebSocket closure
+    chatSocket.onclose = function (e) {
+      console.error("Chat socket closed unexpectedly");
+    };
+
+    // Send message on button click or Enter key press
+    document.querySelector("#chat-message-input").focus();
+    document.querySelector("#chat-message-input").onkeyup = function (e) {
+      if (e.keyCode === 13) {
+        document.querySelector("#chat-message-submit").click();
+      }
+    };
+
+    // Send message on button click
+    document.querySelector("#chat-message-submit").onclick = function (e) {
+      const messageInputDom = document.querySelector("#chat-message-input");
+      const message = messageInputDom.value;
+
+      // Send the message via WebSocket
+      chatSocket.send(
+        JSON.stringify({
+          message: message,
+        })
       );
 
-      chatSocket.onmessage = function (e) {
-        const data = JSON.parse(e.data);
-        const messageList = document.getElementById("message-list");
-        const messageItem = document.createElement("li");
-        messageItem.textContent = `${data.sender}: ${data.message} (${new Date(
-          data.timestamp
-        ).toLocaleString()})`;
-        messageList.appendChild(messageItem);
-      };
-
-      chatSocket.onclose = function (e) {
-        console.error("Chat socket closed unexpectedly");
-      };
-
-      document.querySelector("#chat-message-input").focus();
-      document.querySelector("#chat-message-input").onkeyup = function (e) {
-        if (e.keyCode === 13) {
-          // Enter key
-          document.querySelector("#chat-message-submit").click();
-        }
-      };
-
-      document.querySelector("#chat-message-submit").onclick = function (e) {
-        const messageInputDom = document.querySelector("#chat-message-input");
-        const message = messageInputDom.value;
-        chatSocket.send(
-          JSON.stringify({
-            message: message,
-          })
-        );
-        messageInputDom.value = "";
-      };
-    </script>
-  </body>
+      // Clear the input field
+      messageInputDom.value = "";
+    };
+  </script>
+</body>
 </html>
