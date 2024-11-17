@@ -156,6 +156,9 @@
 				{% endif %}
 			</div>
 			<div class="notifications">
+				<a href="{% url 'my_requests' %}">
+					<span id="my-requests">My Requests</span>
+				</a>
 				<a href="{% url 'file_requests' %}">
 					<span id="file-requests-count"
 						>File Requests ({{ file_requests_count }})</span

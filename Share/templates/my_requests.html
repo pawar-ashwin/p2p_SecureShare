@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>My Requests</title>
+		<style>
+			.request-table {
+				width: 80%;
+				margin: 20px auto;
+				border-collapse: collapse;
+				text-align: left;
+			}
+
+			.request-table th,
+			.request-table td {
+				border: 1px solid #ddd;
+				padding: 8px;
+			}
+
+			.request-table th {
+				background-color: #f2f2f2;
+			}
+
+			.action-button {
+				padding: 5px 10px;
+				background-color: #4caf50;
+				color: white;
+				border: none;
+				border-radius: 5px;
+				cursor: pointer;
+			}
+
+			.action-button:disabled {
+				background-color: #ccc;
+				cursor: not-allowed;
+			}
+		</style>
+	</head>
+	<body style="padding-top: 100px">
+		{% include 'navbar.html' %}
+		<h2 style="text-align: center">My File Requests</h2>
+		<table class="request-table">
+			<thead>
+				<tr>
+					<th>Owner</th>
+					<th>File Name</th>
+					<th>Status</th>
+					<th>Action</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for request in requests %}
+				<tr>
+					<td>{{ request.owner }}</td>
+					<td>{{ request.filename }}</td>
+					<td>{{ request.status }}</td>
+					<td>
+						{% if request.status == "Approved" %}
+						<button
+							onclick="downloadFile('{{ request.owner }}', '{{ request.filename }}')"
+						>
+							Download
+						</button>
+						{% else %}
+						<button class="action-button" disabled>Not Available</button>
+						{% endif %}
+					</td>
+				</tr>
+				{% endfor %}
+				<script>
+					function downloadFile(owner, fileName) {
+						fetch(`/download/${owner}/${fileName}/`)
+							.then((response) => response.json())
+							.then((data) => {
+								if (data.status === "success") {
+									alert(data.message);
+								} else {
+									alert("Error: " + data.message);
+								}
+							})
+							.catch((error) => {
+								console.error("Error:", error);
+							});
+					}
+				</script>
+			</tbody>
+		</table>
+	</body>
+</html>

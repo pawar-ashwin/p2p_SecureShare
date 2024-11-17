@@ -1,6 +1,7 @@
 # views.py
 import datetime
 import os
+import socket
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.views.generic import TemplateView
@@ -398,3 +399,63 @@ def decline_request(request):
         )
         return JsonResponse({'status': 'success', 'message': 'Request declined.'})
     return JsonResponse({'status': 'error', 'message': 'Invalid request ID.'})
+
+def my_requests(request):
+    if 'username' in request.session:
+        username = request.session['username']
+        user = users_collection.find_one({"username": username})
+        share_path_main = user.get('share_path', '')
+        requests_cursor = db.file_requests.find({'requester': username})
+        
+        # Convert cursor to list and rename fields
+        requests = [
+            {
+                "owner": req["owner"],
+                "filename": req["filename"],
+                "status": req["status"],
+                "request_id": str(req["_id"])
+            }
+            for req in requests_cursor
+        ]
+
+        return render(request, 'my_requests.html', {'requests': requests, 'username': username, 'share_path': share_path_main})
+    else:
+        return redirect('home')
+
+
+# Function to download the file
+def download_file(request, owner_username, file_name):
+    if 'username' in request.session:
+        requester = request.session['username']
+        
+        # Find the owner's share path from MongoDB
+        owner = users_collection.find_one({"username": owner_username})
+        if not owner:
+            return JsonResponse({"status": "error", "message": "Owner not found."})
+        
+        # Owner's server details
+        SERVER_HOST = "127.0.0.1"  # Replace with the owner's IP
+        
+        SERVER_PORT = 5001  # Port used by the owner's server
+
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
+                client_socket.connect((SERVER_HOST, SERVER_PORT))
+                client_socket.send(file_name.encode())
+
+                # Check server response
+                response = client_socket.recv(1024).decode()
+                if response == "FOUND":
+                    # Save the file to the requester's system
+                    save_path = os.path.join("D:/DownloadedFiles", file_name)
+                    with open(save_path, "wb") as f:
+                        while chunk := client_socket.recv(1024):
+                            f.write(chunk)
+                    return JsonResponse({"status": "success", "message": f"File downloaded to {save_path}"})
+                else:
+                    return JsonResponse({"status": "error", "message": "File not found on the owner's system."})
+        except Exception as e:
+            print(f"Error during file transfer: {e}")
+            return JsonResponse({"status": "error", "message": "Error during file transfer."})
+    else:
+        return redirect('home')
