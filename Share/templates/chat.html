@@ -1,27 +1,144 @@
-<h2>Chat with {{ receiver }}</h2>
-<div id="chat-messages">
-	{% for msg in messages %}
-	<p><strong>{{ msg.sender }}:</strong> {{ msg.message }}</p>
-	{% endfor %}
-</div>
-<input type="text" id="message-input" placeholder="Type a message..." />
-<button onclick="sendMessage()">Send</button>
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Chat with {{ receiver }}</title>
+		<style>
+			.chat-container {
+				max-width: 800px;
+				margin: 50px auto;
+				background: #fff;
+				padding: 20px;
+				border-radius: 8px;
+				box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+			}
 
-<script>
-	function sendMessage() {
-		const message = document.getElementById("message-input").value;
-		fetch("/send_message/", {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				"X-CSRFToken": "{{ csrf_token }}",
-			},
-			body: JSON.stringify({ receiver: "{{ receiver }}", message: message }),
-		})
-			.then((response) => response.json())
-			.then((data) => {
-				alert(data.message);
-				document.getElementById("message-input").value = "";
-			});
-	}
-</script>
+			.message {
+				margin-bottom: 15px;
+			}
+
+			.message.sender {
+				text-align: right;
+				color: blue;
+			}
+
+			.message.receiver {
+				text-align: left;
+				color: green;
+			}
+
+			.message-time {
+				font-size: 0.8em;
+				color: #666;
+			}
+
+			.message-input {
+				display: flex;
+				margin-top: 20px;
+			}
+
+			.message-input input {
+				flex: 1;
+				padding: 10px;
+				border: 1px solid #ddd;
+				border-radius: 4px;
+			}
+
+			.message-input button {
+				padding: 10px 15px;
+				background: #007bff;
+				color: white;
+				border: none;
+				border-radius: 4px;
+				cursor: pointer;
+				margin-left: 10px;
+			}
+
+			.message-input button:hover {
+				background: #0056b3;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="chat-container">
+			<h2>Chat with {{ receiver }}</h2>
+			<div id="chat-messages">
+				{% for msg in messages %}
+				<div
+					class="message {% if msg.sender == current_user %}sender{% else %}receiver{% endif %}"
+				>
+					<p>{{ msg.message }}</p>
+					<span class="message-time">{{ msg.timestamp }}</span>
+				</div>
+				{% endfor %}
+			</div>
+
+			<div class="message-input">
+				<input type="text" id="messageInput" placeholder="Type a message..." />
+				<button onclick="sendMessage()">Send</button>
+			</div>
+		</div>
+
+		<script>
+			const currentUser = "{{ current_user }}";
+			const receiver = "{{ receiver }}";
+
+			function fetchMessages() {
+				fetch("{% url 'fetch_messages' %}?receiver=" + receiver)
+					.then((response) => response.json())
+					.then((data) => {
+						const chatMessages = document.getElementById("chat-messages");
+						chatMessages.innerHTML = "";
+
+						data.messages.forEach((msg) => {
+							const messageDiv = document.createElement("div");
+							messageDiv.className =
+								"message " +
+								(msg.sender === currentUser ? "sender" : "receiver");
+							messageDiv.innerHTML = `
+                            <p>${msg.message}</p>
+                            <span class="message-time">${msg.timestamp}</span>
+                        `;
+							chatMessages.appendChild(messageDiv);
+						});
+
+						// Scroll to the bottom to show the latest messages
+						chatMessages.scrollTop = chatMessages.scrollHeight;
+					});
+			}
+
+			function sendMessage() {
+				const messageInput = document.getElementById("messageInput");
+				const message = messageInput.value.trim();
+
+				if (!message) return;
+
+				fetch("{% url 'send_message' %}", {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+						"X-CSRFToken": "{{ csrf_token }}",
+					},
+					body: JSON.stringify({
+						receiver: receiver,
+						message: message,
+					}),
+				})
+					.then((response) => response.json())
+					.then((data) => {
+						if (data.message === "Message sent!") {
+							messageInput.value = "";
+							fetchMessages(); // Refresh messages after sending
+						}
+					});
+			}
+
+			// Poll messages every 3 seconds
+			setInterval(fetchMessages, 3000);
+
+			// Fetch messages on page load
+			document.addEventListener("DOMContentLoaded", fetchMessages);
+		</script>
+	</body>
+</html>
