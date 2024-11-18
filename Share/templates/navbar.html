@@ -164,8 +164,11 @@
 						>File Requests ({{ file_requests_count }})</span
 					>
 				</a>
-				<a href="{% url 'chat' username=username%}">
+				<!-- <a href="{% url 'chat' username=username%}">
 					<span id="chats-count">Chats ({{ chat_count }})</span>
+				</a> -->
+				<a href="{% url 'chat' username=username %}">
+					<span id="chats-count">Chats</span>
 				</a>
 			</div>
 		</div>

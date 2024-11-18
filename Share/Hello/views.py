@@ -332,16 +332,32 @@ def file_requests(request):
         return redirect('home')
 
 
+from datetime import datetime
+
 def chat_view(request, username):
+    if 'username' not in request.session:
+        return redirect('home')
+
     current_user = request.session['username']
-    messages = db.chats.find({
+
+    # Fetch messages between the current user and the selected user
+    messages = list(db.chats.find({
         '$or': [
             {'sender': current_user, 'receiver': username},
             {'sender': username, 'receiver': current_user}
         ]
+    }).sort('timestamp', -1))  # Sort messages by timestamp, newest first
+
+    # Format messages for rendering
+    for message in messages:
+        message['timestamp'] = message['timestamp'].strftime('%Y-%m-%d %H:%M:%S')
+
+    return render(request, 'chat.html', {
+        'messages': messages,
+        'receiver': username,
+        'current_user': current_user,
     })
 
-    return render(request, 'chat.html', {'messages': messages, 'receiver': username})
 
 @csrf_exempt
 def send_message(request):
@@ -351,6 +367,7 @@ def send_message(request):
         receiver = data['receiver']
         message = data['message']
 
+        # Insert the new message into the database
         db.chats.insert_one({
             'sender': sender,
             'receiver': receiver,
@@ -359,6 +376,7 @@ def send_message(request):
         })
 
         return JsonResponse({'message': 'Message sent!'})
+
 
 
 #signout API
@@ -424,36 +442,65 @@ def my_requests(request):
 
 
 # Function to download the file
-def download_file(request, owner_username, file_name):
+def download_file(request, owner, filename):
     if 'username' in request.session:
         requester = request.session['username']
+        print(filename)
+        print(owner)
         
         # Find the owner's share path from MongoDB
-        owner = users_collection.find_one({"username": owner_username})
+        owner = users_collection.find_one({"username": owner})
         if not owner:
             return JsonResponse({"status": "error", "message": "Owner not found."})
         
         # Owner's server details
-        SERVER_HOST = "127.0.0.1"  # Replace with the owner's IP
-        
+        SERVER_HOST = "192.168.1.80"  # Replace with the owner's IP
         SERVER_PORT = 5001  # Port used by the owner's server
 
         try:
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
-                client_socket.connect((SERVER_HOST, SERVER_PORT))
-                client_socket.send(file_name.encode())
+            # with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
+            #     client_socket.connect((SERVER_HOST, SERVER_PORT))
+            #     client_socket.send(filename.encode())
 
-                # Check server response
-                response = client_socket.recv(1024).decode()
-                if response == "FOUND":
-                    # Save the file to the requester's system
-                    save_path = os.path.join("D:/DownloadedFiles", file_name)
-                    with open(save_path, "wb") as f:
-                        while chunk := client_socket.recv(1024):
-                            f.write(chunk)
-                    return JsonResponse({"status": "success", "message": f"File downloaded to {save_path}"})
-                else:
-                    return JsonResponse({"status": "error", "message": "File not found on the owner's system."})
+            #     # Check server response
+            #     response = client_socket.recv(1024).decode()
+            #     if response == "FOUND":
+            #         # Save the file to the requester's system
+            #         save_path = os.path.join("D:\P2P_Downloads", filename)
+            #         with open(save_path, "wb") as f:
+            #             while chunk := client_socket.recv(1024):
+            #                 f.write(chunk)
+            #         return JsonResponse({"status": "success", "message": f"File downloaded to {save_path}"})
+            #     else:
+            #         return JsonResponse({"status": "error", "message": "File not found on the owner's system."})
+
+            # Create a socket object
+            client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+            # Connect to the server
+            client_socket.connect((SERVER_HOST, SERVER_PORT))
+
+            # Get the filename from the user
+            file_to_request = filename
+
+            # Send the filename to the server
+            client_socket.send(file_to_request.encode())
+            save_path = os.path.join("D:\\P2P_Downloads",filename)
+
+            # Open the file to write the received content in binary mode
+            # Open the file to write the received content in binary mode
+            with open(save_path, "wb") as file:
+                while True:
+                    # Receive file data in chunks
+                    data = client_socket.recv(1024)
+                    if not data:
+                        break  # If no data is received, the file transfer is complete
+                    file.write(data)
+                print(f"[*] File '{file_to_request}' received and saved as {file_to_request}'.")
+
+            # Close the socket only after the file is fully received
+            client_socket.close()
+            
         except Exception as e:
             print(f"Error during file transfer: {e}")
             return JsonResponse({"status": "error", "message": "Error during file transfer."})
