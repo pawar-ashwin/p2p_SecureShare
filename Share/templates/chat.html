@@ -81,6 +81,33 @@
 		</div>
 
 		<script>
+			const currentUser = "{{ current_user }}";
+			const receiver = "{{ receiver }}";
+
+			function fetchMessages() {
+				fetch("{% url 'fetch_messages' %}?receiver=" + receiver)
+					.then((response) => response.json())
+					.then((data) => {
+						const chatMessages = document.getElementById("chat-messages");
+						chatMessages.innerHTML = "";
+
+						data.messages.forEach((msg) => {
+							const messageDiv = document.createElement("div");
+							messageDiv.className =
+								"message " +
+								(msg.sender === currentUser ? "sender" : "receiver");
+							messageDiv.innerHTML = `
+                            <p>${msg.message}</p>
+                            <span class="message-time">${msg.timestamp}</span>
+                        `;
+							chatMessages.appendChild(messageDiv);
+						});
+
+						// Scroll to the bottom to show the latest messages
+						chatMessages.scrollTop = chatMessages.scrollHeight;
+					});
+			}
+
 			function sendMessage() {
 				const messageInput = document.getElementById("messageInput");
 				const message = messageInput.value.trim();
@@ -94,17 +121,24 @@
 						"X-CSRFToken": "{{ csrf_token }}",
 					},
 					body: JSON.stringify({
-						receiver: "{{ receiver }}",
+						receiver: receiver,
 						message: message,
 					}),
 				})
 					.then((response) => response.json())
 					.then((data) => {
 						if (data.message === "Message sent!") {
-							location.reload();
+							messageInput.value = "";
+							fetchMessages(); // Refresh messages after sending
 						}
 					});
 			}
+
+			// Poll messages every 3 seconds
+			setInterval(fetchMessages, 3000);
+
+			// Fetch messages on page load
+			document.addEventListener("DOMContentLoaded", fetchMessages);
 		</script>
 	</body>
 </html>

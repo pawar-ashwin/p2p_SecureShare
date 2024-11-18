@@ -378,6 +378,33 @@ def send_message(request):
         return JsonResponse({'message': 'Message sent!'})
 
 
+def fetch_messages(request):
+    if 'username' not in request.session:
+        return JsonResponse({'status': 'error', 'message': 'Unauthorized'}, status=403)
+
+    current_user = request.session['username']
+    receiver = request.GET.get('receiver')
+
+    # Fetch messages between the current user and the selected user
+    messages = list(db.chats.find({
+        '$or': [
+            {'sender': current_user, 'receiver': receiver},
+            {'sender': receiver, 'receiver': current_user}
+        ]
+    }).sort('timestamp', -1))  # Sort messages by timestamp, newest first
+
+    # Format messages for response
+    formatted_messages = []
+    for message in messages:
+        formatted_messages.append({
+            'sender': message['sender'],
+            'receiver': message['receiver'],
+            'message': message['message'],
+            'timestamp': message['timestamp'].strftime('%Y-%m-%d %H:%M:%S')
+        })
+
+    return JsonResponse({'messages': formatted_messages})
+
 
 #signout API
 def signout(request):

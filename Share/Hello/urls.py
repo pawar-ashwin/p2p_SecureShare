@@ -1,7 +1,7 @@
 # urls.py
 
 from django.urls import path
-from .views import HomePage, AboutPage, signup, user_dashboard, login, user_profile, update_email, update_share_path, my_files, search_files, request_file, chat_view, send_message, file_requests, signout, approve_request, decline_request, my_requests, download_file
+from .views import HomePage, AboutPage, signup, user_dashboard, login, user_profile, update_email, update_share_path, my_files, search_files, request_file, chat_view, send_message, file_requests, signout, approve_request, decline_request, my_requests, download_file, fetch_messages
 from . import views
 
 urlpatterns = [
@@ -24,4 +24,5 @@ urlpatterns = [
     path('approve_request/', views.approve_request, name='approve_request'),
     path('decline_request/', views.decline_request, name='decline_request'),
     path('download/<str:owner>/<str:filename>/', download_file, name='download_file'),
+    path('fetch_messages/', fetch_messages, name='fetch_messages'),
 ]
