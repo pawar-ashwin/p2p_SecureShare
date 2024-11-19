@@ -507,7 +507,7 @@ def download_file(request, owner, filename):
             return JsonResponse({"status": "error", "message": "Owner not found."})
         
         # Owner's server details
-        SERVER_HOST = "192.168.247.191"  # Replace with the owner's IP
+        SERVER_HOST = owner['IP']  # Replace with the owner's IP
         SERVER_PORT = 5001  # Port used by the owner's server
 
         try:
@@ -550,6 +550,7 @@ def download_file(request, owner, filename):
                         break  # If no data is received, the file transfer is complete
                     file.write(data)
                 print(f"[*] File '{file_to_request}' received and saved as {file_to_request}'.")
+
 
             # Close the socket only after the file is fully received
             client_socket.close()
