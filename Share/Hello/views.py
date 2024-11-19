@@ -197,14 +197,15 @@ def user_dashboard(request):
     if 'username' in request.session:
         username = request.session['username']
         user = users_collection.find_one({"username": username})
+
         # Get popular files from other users' shared paths
         popular_files_list = popular_files()
 
-        # Render the dashboard with popular files only
+        # Render the dashboard with popular files
         return render(request, 'user.html', {
             'username': username,
-            "share_path" : user['share_path'],
-            "popular_files": popular_files_list
+            'share_path': user.get('share_path', ''),
+            'popular_files': popular_files_list  # Pass the list of popular files
         })
     else:
         return redirect('home')
@@ -331,6 +332,8 @@ def popular_files():
     Fetches random files from all users' share paths for the 'Popular Files on the Network' section.
     """
     all_files = []
+    
+    # Iterate through all users who have a non-empty 'share_path'
     all_users = users_collection.find({"share_path": {"$ne": ""}})  # Users with non-empty share paths
 
     # for i in all_users:
@@ -347,14 +350,17 @@ def popular_files():
         # Verify the path exists and is a directory
         if user_files_from_db:
             try:
-                # Get all files in the user's share path
-                user_files = user_files_from_db
-                all_files.extend([{"username": user["username"], "file": file} for file in user_files])
+                # Extend the all_files list with user file info
+                all_files.extend([{"username": user["username"], "file": file} for file in user_files_from_db])
             except Exception as e:
-                print(f"Error accessing files in {user_files_from_db}: {e}")
+                print(f"Error accessing files for user {user['username']}: {e}")
     
-    # Randomly select up to 10 files for display
-    random_files = random.sample(all_files, min(len(all_files), 12))
+    # If there are any files, randomly select a few for display
+    if all_files:
+        random_files = random.sample(all_files, min(len(all_files), 12))  # Limit to 12 random files
+    else:
+        random_files = []
+
     return random_files
 
 @require_GET
@@ -363,11 +369,15 @@ def search_files(request):
         username_main = request.session['username']
         user_main = users_collection.find_one({"username": username_main})
         share_path_main = user_main.get('share_path', '')
+        
+        # Get the search query from the GET parameters
         query = request.GET.get('query', '').strip()  # Get the search query
         query = escape(query)  # Escape to prevent XSS
-
-        # Search across all users' shared files
+        
+        # List to store search results
         search_results = []
+
+        # Iterate through all users' data to search their files
         for user in users_collection.find({}):
             username = user['username']
             share_path = user.get('share_path', '')
@@ -382,10 +392,17 @@ def search_files(request):
                 except Exception as e:
                     print(f"Error accessing files for {username}: {e}")
                     continue
-
-        return render(request, 'user.html', {'search_results': search_results, 'query': query, 'username': username_main, 'share_path': share_path_main})
+        
+        # Render the search results in the template
+        return render(request, 'user.html', {
+            'search_results': search_results, 
+            'query': query, 
+            'username': username_main, 
+            'share_path': share_path_main
+        })
     else:
         return redirect('home')
+
     
 
 @csrf_exempt
