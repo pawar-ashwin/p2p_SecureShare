@@ -17,6 +17,12 @@ import json
 from django.shortcuts import redirect
 from django.contrib import messages
 from bson import ObjectId
+import threading
+import time
+from datetime import datetime
+
+# Flag to stop the background task
+stop_thread = False
 
 # MongoDB connection setup
 mongo_uri = "mongodb+srv://sowmyamutya20:hyB1Mq5ODLBssNDl@logincredentials.oalqb.mongodb.net/?retryWrites=true&w=majority&appName=loginCredentials"
@@ -38,7 +44,78 @@ class HomePage(TemplateView):
 class AboutPage(TemplateView):
     template_name = 'about.html'
 
-import socket
+# Function to run in the background
+def background_task(share_path):
+    global stop_thread
+    while not stop_thread:
+
+        # Server configuration
+        SERVER_HOST = "0.0.0.0"  # Listen on all interfaces
+        SERVER_PORT = 5001       # Port number for communication
+
+        # Function to handle client connection and file transfer
+        def handle_client(client_socket):
+            # Receive the filename requested by the client
+            requested_file = client_socket.recv(1024).decode()
+            print(f"[*] Client requested the file: {requested_file}")
+
+            # Check if the file exists
+            file_path = os.path.join('C:\\Restaurant Project Resources\\', requested_file)
+            if os.path.isfile(file_path):
+                # Open the requested file in binary mode
+                with open(file_path, "rb") as file:
+                    # Send the file in chunks to the client
+                    while chunk := file.read(1024):
+                        client_socket.send(chunk)
+                print(f"[*] File '{requested_file}' sent successfully.")
+            else:
+                # If file doesn't exist, send an error message to the client
+                error_message = f"Error: The file '{requested_file}' does not exist."
+                client_socket.send(error_message.encode())
+                print(f"[!] File '{requested_file}' not found. Sent error message.")
+
+            # Close the client connection after sending the file
+            client_socket.close()
+            print(f"[*] Client connection closed after file transfer.")
+
+        # Create a socket object
+        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        # Bind the socket to the server address and port
+        server_socket.bind((SERVER_HOST, SERVER_PORT))
+
+        # Listen for incoming connections (can handle 1 client at a time)
+        server_socket.listen(1)
+        print(f"[*] Listening on {SERVER_HOST}:{SERVER_PORT}")
+
+        # Main server loop to handle one client at a time
+        while True:
+            # Accept client connection
+            client_socket, client_address = server_socket.accept()
+            print(f"[+] {client_address} is connected.")
+
+            # Handle the client (send file, close connection)
+            handle_client(client_socket)
+
+            # After handling the client, the server will return to listening for new connections
+            print("[*] Ready for new connections...\n")
+
+        # Close the server socket after breaking the loop (this won't be reached unless the server stops)
+        server_socket.close()
+
+# Function to start the background task
+def start_background_task(share_path):
+    global stop_thread
+    stop_thread = False  # Ensure stop flag is reset
+    thread = threading.Thread(target=background_task, args=(share_path, ))
+    thread.daemon = True  # Daemonize the thread so it exits when the main program exits
+    thread.start()
+
+# Function to stop the background task
+def stop_background_task():
+    global stop_thread
+    stop_thread = True
+    print("Stop signal sent to background task.")
 
 def get_local_ip():
     try:
@@ -102,6 +179,8 @@ def login(request):
         # Check if the user exists in the database
         user = users_collection.find_one({'username': username, 'password': password})
         user['IP'] = get_local_ip()
+        if(user['share_path'] != ''):
+            start_background_task(user['share_path'])
         
         if user:
             request.session['username'] = username  # Store the username in the session
@@ -113,15 +192,6 @@ def login(request):
             return redirect('home')  # Redirect back to the home page if login fails
     
     return redirect('home')  # Redirect to home page for GET request
-
-# def user_dashboard(request):
-#     if 'username' in request.session:
-#         username = request.session['username']
-#         user = users_collection.find_one({"username": username})
-
-#         return render(request, 'user.html', {'username': username, "share_path" : user['share_path']})
-#     else:
-#         return redirect('home')
 
 def user_dashboard(request):
     if 'username' in request.session:
@@ -355,9 +425,6 @@ def file_requests(request):
     else:
         return redirect('home')
 
-
-from datetime import datetime
-
 def chat_view(request, username):
     if 'username' not in request.session:
         return redirect('home')
@@ -437,6 +504,7 @@ def signout(request):
 
     # display logout message
     messages.success(request, 'You have successfully logged out.')
+    stop_background_task()
 
     # Redirect to the home page
     return redirect('home')
@@ -541,7 +609,6 @@ def download_file(request, owner, filename):
             save_path = os.path.join("D:\\P2P_Downloads",filename)
 
             # Open the file to write the received content in binary mode
-            # Open the file to write the received content in binary mode
             with open(save_path, "wb") as file:
                 while True:
                     # Receive file data in chunks
@@ -551,7 +618,7 @@ def download_file(request, owner, filename):
                     file.write(data)
                 print(f"[*] File '{file_to_request}' received and saved as {file_to_request}'.")
 
-
+            client_socket.send("exit".encode())
             # Close the socket only after the file is fully received
             client_socket.close()
             return JsonResponse({"status": "success", "message": f"File downloaded to {save_path}"})
