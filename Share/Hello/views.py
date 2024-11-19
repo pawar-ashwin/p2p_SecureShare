@@ -47,6 +47,16 @@ class AboutPage(TemplateView):
 # Function to run in the background
 def background_task(share_path):
     global stop_thread
+    print("Heyyyyyyyyyyyyy!", share_path)
+    updated_path = ''
+    for i in share_path:
+        if(i == '\\'):
+            updated_path +='\\'
+        updated_path += i
+    updated_path = updated_path + '\\' + '\\'
+    
+
+    print("Uffffffffffff!", updated_path)
     while not stop_thread:
 
         # Server configuration
@@ -60,9 +70,9 @@ def background_task(share_path):
             print(f"[*] Client requested the file: {requested_file}")
 
             # Check if the file exists
-            file_path = os.path.join('C:\\Restaurant Project Resources\\', requested_file)
+            file_path = os.path.join(updated_path, requested_file)
             if os.path.isfile(file_path):
-                # Open the requested file in binary mode
+                # Open the requested file in bilognary mode
                 with open(file_path, "rb") as file:
                     # Send the file in chunks to the client
                     while chunk := file.read(1024):
@@ -171,6 +181,8 @@ def signup(request):
     
     return redirect('home')  # Redirect to home page for GET request
 
+from pymongo import UpdateOne
+
 def login(request):
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -178,20 +190,25 @@ def login(request):
         
         # Check if the user exists in the database
         user = users_collection.find_one({'username': username, 'password': password})
-        user['IP'] = get_local_ip()
-        if(user['share_path'] != ''):
-            start_background_task(user['share_path'])
         
         if user:
+            # Update the user's IP address
+            user_ip = get_local_ip()  # Get the current IP address
+            users_collection.update_one({'_id': user['_id']}, {'$set': {'IP': user_ip}})  # Update the IP in the database
+            
+            # Optionally handle share_path functionality if needed
+            if user.get('share_path', ''):
+                start_background_task(user['share_path'])
+            
+            # Store the username in the session
             request.session['username'] = username  # Store the username in the session
-            # messages.success(request, 'Login successful!')
             print("Message set: Login successful!") 
             return redirect('user_dashboard')  # Redirect to the user dashboard after login
         else:
             messages.error(request, 'Invalid credentials! Please try again.')
             return redirect('home')  # Redirect back to the home page if login fails
     
-    return redirect('home')  # Redirect to home page for GET request
+    return redirect('home')
 
 def user_dashboard(request):
     if 'username' in request.session:
@@ -608,7 +625,7 @@ def download_file(request, owner, filename):
 
             # Send the filename to the server
             client_socket.send(file_to_request.encode())
-            save_path = os.path.join("D:\\P2P_Downloads",filename)
+            save_path = os.path.join("C:\\",filename)
 
             # Open the file to write the received content in binary mode
             with open(save_path, "wb") as file:
