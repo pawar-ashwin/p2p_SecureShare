@@ -408,6 +408,8 @@ def request_file(request):
 def file_requests(request):
     if 'username' in request.session:
         username = request.session['username']
+        user = users_collection.find_one({"username": username})
+        share_path_main = user.get('share_path', '')
         requests_cursor = db.file_requests.find({'owner': username, 'status': 'Pending'})
         
         # Convert MongoDB cursor to list, renaming `_id` to `request_id`
@@ -415,13 +417,13 @@ def file_requests(request):
             {
                 "request_id": str(req["_id"]),  # Rename `_id` to `request_id`
                 "requester": req["requester"],
-                "filename": req["filename"]
+                "filename": req["filename"],
             }
             for req in requests_cursor
         ]
 
         # Pass the modified requests list to the template
-        return render(request, 'file_requests.html', {'requests': requests})
+        return render(request, 'file_requests.html', {'requests': requests, 'username': username, 'share_path': share_path_main})
     else:
         return redirect('home')
 

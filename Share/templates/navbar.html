@@ -1,248 +1,322 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f0f4f7;
-            box-sizing: border-box;
-            transition: background-color 0.3s, color 0.3s;
-        }
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+		<style>
+			body {
+				font-family: Arial, sans-serif;
+				margin: 0;
+				padding: 0;
+				background-color: #f0f4f7;
+				box-sizing: border-box;
+				transition: background-color 0.3s, color 0.3s;
+			}
 
-        .dark-mode {
-            background-color: #121212;
-            color: #e0e0e0;
-        }
+			.dark-mode {
+				background-color: #121212;
+				color: #e0e0e0;
+			}
 
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 20px;
-        }
+			.container {
+				max-width: 1000px;
+				margin: 0 auto;
+				padding: 20px;
+			}
 
-        .top-bar {
-            position: fixed;
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 20px;
-            background-color: #333;
-            color: white;
-            top: 0;
-            left: 0;
-            box-sizing: border-box;
-        }
+			.top-bar {
+				position: fixed;
+				width: 100%;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				padding: 10px 20px;
+				background-color: #333;
+				color: white;
+				top: 0;
+				left: 0;
+				box-sizing: border-box;
+			}
 
-        .top-bar img {
-            width: 40px;
-            height: 40px;
-            margin-right: 10px;
-        }
+			.top-bar img {
+				width: 40px;
+				height: 40px;
+				margin-right: 10px;
+			}
 
-        .search-bar input[type="text"] {
-            padding: 8px;
-            width: 500px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-        }
+			.search-bar input[type="text"] {
+				padding: 8px;
+				width: 500px;
+				border-radius: 5px;
+				border: 1px solid #ccc;
+			}
 
-        .profile-section {
-            position: relative;
-            display: inline-block;
-        }
+			.profile-section {
+				position: relative;
+				display: inline-block;
+			}
 
-        .profile-icon {
-            cursor: pointer;
-            font-size: 1.2rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+			.profile-icon {
+				cursor: pointer;
+				font-size: 1.2rem;
+				display: flex;
+				align-items: center;
+				gap: 10px;
+			}
 
-        .profile-icon img {
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            border: 2px solid #f0a500;
-        }
+			.profile-icon img {
+				width: 35px;
+				height: 35px;
+				border-radius: 50%;
+				border: 2px solid #f0a500;
+			}
 
-        .dropdown {
-            display: none;
-            position: absolute;
-            top: 50px;
-            right: 0;
-            background-color: white;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            border-radius: 5px;
-            overflow: hidden;
-            min-width: 150px;
-            z-index: 1000;
-        }
+			.dropdown {
+				display: none;
+				position: absolute;
+				top: 50px;
+				right: 0;
+				background-color: white;
+				box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+				border-radius: 5px;
+				overflow: hidden;
+				min-width: 150px;
+				z-index: 1000;
+			}
 
-        .dropdown a {
-            display: block;
-            padding: 10px;
-            text-decoration: none;
-            color: #333;
-            font-size: 1rem;
-        }
+			.dropdown a {
+				display: block;
+				padding: 10px;
+				text-decoration: none;
+				color: #333;
+				font-size: 1rem;
+			}
 
-        .dropdown a:hover {
-            background-color: #f0f4f7;
-        }
+			.dropdown a:hover {
+				background-color: #f0f4f7;
+			}
 
-        .iconName {
-            display: flex;
-        }
+			.iconName {
+				display: flex;
+			}
 
-        .toggle-button {
-            background-color: transparent;
-            border: none;
-            color: white;
-            cursor: pointer;
-            font-size: 1rem;
-            margin-left: 20px;
-        }
+			.toggle-button {
+				background-color: transparent;
+				border: none;
+				color: white;
+				cursor: pointer;
+				font-size: 1rem;
+				margin-left: 20px;
+			}
 
-        .request-button {
-            background-color: #f0a500;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            padding: 10px 15px;
-            margin: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
+			.request-button {
+				background-color: #f0a500;
+				color: white;
+				border: none;
+				border-radius: 5px;
+				padding: 10px 15px;
+				margin: 5px;
+				cursor: pointer;
+				transition: background-color 0.3s;
+			}
 
-        .request-button:hover {
-            background-color: #e09e00;
-        }
-    </style>
-</head>
-<body>
-    <div class="top-bar">
-        <div class="iconName">
-            <img src="images/image.png" alt="App Icon" />
-            <h2>
-                <a href="{% url 'user_dashboard' %}" style="text-decoration: none; color: white">P2P Secure Share</a>
-            </h2>
-        </div>
-        <div class="search-bar">
-            <form action="{% url 'search_files' %}" method="get" style="display: inline">
-                <input type="text" name="query" placeholder="Search for files..." />
-                <button type="submit" style="display: none"></button>
-            </form>
-        </div>
-        <div class="profile-section">
-            <div class="profile-icon" id="profileToggle">
-                <canvas id="identiconCanvas" width="35" height="35" style="display: none"></canvas>
-                <img id="identiconImage" alt="User Profile Icon" />
-                <span id="username">{{ username }}</span>
-            </div>
-            <div class="dropdown" id="profileDropdown">
-                <a href="{% url 'user_profile' %}">Profile</a>
-                <a href="{% url 'my_files' %}">My Files</a>
-                <a href="{% url 'signout' %}">Sign Out</a>
-            </div>
-            {% if not share_path %}
-            <button id="sharePathPrompt" style="position: absolute; left: -28px; top: 38px; background-color: red; color: white; padding: 5px 10px; border: none; border-radius: 5px; font-size: 14px; cursor: pointer; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);">
-                + share path
-            </button>
-            {% endif %}
-        </div>
-        <div class="notifications">
-            <button class="request-button" onclick="window.location.href='{% url 'my_requests' %}'">My Requests</button>
-            <button class="request-button" onclick="window.location.href='{% url 'file_requests' %}'">File Requests</button>
-            <button class="request-button" onclick="window.location.href='{% url 'chat' username=username %}'">KeepNote</button>
-        </div>
-        <button class="toggle-button" id="darkModeToggle">Toggle Dark Mode</button>
-    </div>
+			.request-button:hover {
+				background-color: #e09e00;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="top-bar">
+			<div class="iconName">
+				<img src="images/image.png" alt="App Icon" />
+				<h2>
+					<a
+						href="{% url 'user_dashboard' %}"
+						style="text-decoration: none; color: white"
+						>P2P Secure Share</a
+					>
+				</h2>
+			</div>
+			<div class="search-bar">
+				<form
+					action="{% url 'search_files' %}"
+					method="get"
+					style="display: inline"
+				>
+					<input type="text" name="query" placeholder="Search for files..." />
+					<button type="submit" style="display: none"></button>
+				</form>
+			</div>
+			<div class="profile-section">
+				<div class="profile-icon" id="profileToggle">
+					<canvas
+						id="identiconCanvas"
+						width="35"
+						height="35"
+						style="display: none"
+					></canvas>
+					<img id="identiconImage" alt="User Profile Icon" />
+					<span id="username">{{ username }}</span>
+				</div>
+				<div class="dropdown" id="profileDropdown">
+					<a href="{% url 'user_profile' %}">Profile</a>
+					<a href="{% url 'my_files' %}">My Files</a>
+					<a href="{% url 'signout' %}">Sign Out</a>
+				</div>
+				{% if not share_path %}
+				<button
+					id="sharePathPrompt"
+					style="
+						position: absolute;
+						left: -28px;
+						top: 38px;
+						background-color: red;
+						color: white;
+						padding: 5px 10px;
+						border: none;
+						border-radius: 5px;
+						font-size: 14px;
+						cursor: pointer;
+						box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+					"
+				>
+					+ share path
+				</button>
+				{% endif %}
+			</div>
+			<div class="notifications">
+				<button
+					class="request-button"
+					onclick="window.location.href='{% url 'my_requests' %}'"
+				>
+					My Requests
+				</button>
+				<button
+					class="request-button"
+					onclick="window.location.href='{% url 'file_requests' %}'"
+				>
+					File Requests
+				</button>
+				<button
+					class="request-button"
+					onclick="window.location.href='{% url 'chat' username=username %}'"
+				>
+					KeepNote
+				</button>
+			</div>
+			<button class="toggle-button" id="darkModeToggle">
+				Toggle Dark Mode
+			</button>
+		</div>
 
-    <script>
-        // JavaScript code for identicon, dropdown, and share path prompt
-        function md5Hash(string) {
-            return CryptoJS.MD5(string).toString(CryptoJS.enc.Hex);
-        }
+		<script>
+			function updateSharePath(newSharePath) {
+				fetch("{% url 'update_share_path' %}", {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/x-www-form-urlencoded",
+						"X-CSRFToken": "{{ csrf_token }}",
+					},
+					body: new URLSearchParams({ share_path: newSharePath }),
+				})
+					.then((response) => response.json())
+					.then((data) => {
+						if (data.status === "success") {
+							alert(data.message);
+							// Hide the share path prompt button if the update is successful
+							const sharePathPrompt =
+								document.getElementById("sharePathPrompt");
+							if (sharePathPrompt) {
+								sharePathPrompt.style.display = "none";
+							}
+						} else {
+							alert("Failed to update share path: " + data.message);
+						}
+					})
+					.catch((error) => {
+						console.error("Error:", error);
+						alert("An error occurred while updating the share path.");
+					});
+			}
 
-        function generateIdenticon(userId, size = 35) {
-            const userHash = md5Hash(userId);
-            const color = `#${userHash.slice(0, 6)}`;
-            const canvas = document.getElementById("identiconCanvas");
-            const context = canvas.getContext("2d");
-            const gridSize = 5;
-            const squareSize = size / gridSize;
+			// JavaScript code for identicon, dropdown, and share path prompt
+			function md5Hash(string) {
+				return CryptoJS.MD5(string).toString(CryptoJS.enc.Hex);
+			}
 
-            let pattern = Array.from(
-                { length: gridSize * Math.ceil(gridSize / 2) },
-                (_, i) => parseInt(userHash[i], 16) % 2
-            );
+			function generateIdenticon(userId, size = 35) {
+				const userHash = md5Hash(userId);
+				const color = `#${userHash.slice(0, 6)}`;
+				const canvas = document.getElementById("identiconCanvas");
+				const context = canvas.getContext("2d");
+				const gridSize = 5;
+				const squareSize = size / gridSize;
 
-            context.clearRect(0, 0, size, size);
-            context.fillStyle = color;
+				let pattern = Array.from(
+					{ length: gridSize * Math.ceil(gridSize / 2) },
+					(_, i) => parseInt(userHash[i], 16) % 2
+				);
 
-            for (let y = 0; y < gridSize; y++) {
-                for (let x = 0; x < Math.ceil(gridSize / 2); x++) {
-                    if (pattern[y * Math.ceil(gridSize / 2) + x] === 1) {
-                        context.fillRect(
-                            x * squareSize,
-                            y * squareSize,
-                            squareSize,
-                            squareSize
-                        );
-                        context.fillRect(
-                            (gridSize - x - 1) * squareSize,
-                            y * squareSize,
-                            squareSize,
-                            squareSize
-                        );
-                    }
-                }
-            }
+				context.clearRect(0, 0, size, size);
+				context.fillStyle = color;
 
-            const img = document.getElementById("identiconImage");
-            img.src = canvas.toDataURL("image/png");
-        }
+				for (let y = 0; y < gridSize; y++) {
+					for (let x = 0; x < Math.ceil(gridSize / 2); x++) {
+						if (pattern[y * Math.ceil(gridSize / 2) + x] === 1) {
+							context.fillRect(
+								x * squareSize,
+								y * squareSize,
+								squareSize,
+								squareSize
+							);
+							context.fillRect(
+								(gridSize - x - 1) * squareSize,
+								y * squareSize,
+								squareSize,
+								squareSize
+							);
+						}
+					}
+				}
 
-        const userId = document.querySelector("#username").textContent;
-        generateIdenticon(userId);
+				const img = document.getElementById("identiconImage");
+				img.src = canvas.toDataURL("image/png");
+			}
 
-        const profileToggle = document.getElementById("profileToggle");
-        const profileDropdown = document.getElementById("profileDropdown");
+			const userId = document.querySelector("#username").textContent;
+			generateIdenticon(userId);
 
-        profileToggle.addEventListener("click", function () {
-            profileDropdown.style.display =
-                profileDropdown.style.display === "block" ? "none" : "block";
-        });
+			const profileToggle = document.getElementById("profileToggle");
+			const profileDropdown = document.getElementById("profileDropdown");
 
-        window.addEventListener("click", function (event) {
-            if (!profileToggle.contains(event.target)) {
-                profileDropdown.style.display = "none";
-            }
-        });
+			profileToggle.addEventListener("click", function () {
+				profileDropdown.style.display =
+					profileDropdown.style.display === "block" ? "none" : "block";
+			});
 
-        document.addEventListener("DOMContentLoaded", function () {
-            const sharePathPrompt = document.getElementById("sharePathPrompt");
-            if (sharePathPrompt) {
-                sharePathPrompt.addEventListener("click", function () {
-                    const newSharePath = prompt("Please enter your share path:");
-                    if (newSharePath) {
-                        updateSharePath(newSharePath);
-                    }
-                });
-            }
+			window.addEventListener("click", function (event) {
+				if (!profileToggle.contains(event.target)) {
+					profileDropdown.style.display = "none";
+				}
+			});
 
-            const darkModeToggle = document.getElementById("darkModeToggle");
-            darkModeToggle.addEventListener("click", function () {
-                document.body.classList.toggle("dark-mode");
-            });
-        });
-    </script>
-</body>
+			document.addEventListener("DOMContentLoaded", function () {
+				const sharePathPrompt = document.getElementById("sharePathPrompt");
+				if (sharePathPrompt) {
+					sharePathPrompt.addEventListener("click", function () {
+						const newSharePath = prompt("Please enter your share path:");
+						if (newSharePath) {
+							updateSharePath(newSharePath);
+						}
+					});
+				}
+
+				const darkModeToggle = document.getElementById("darkModeToggle");
+				darkModeToggle.addEventListener("click", function () {
+					document.body.classList.toggle("dark-mode");
+				});
+			});
+		</script>
+	</body>
 </html>

@@ -1,55 +1,127 @@
-<h2>File Requests</h2>
-<ul>
-    {% for request in requests %}
-    <li>
-        {{ request.requester }} requested {{ request.filename }}
-        <button onclick="approveRequest('{{ request.request_id }}')">Approve</button>
-        <button onclick="declineRequest('{{ request.request_id }}')">Decline</button>
-    </li>
-    {% endfor %}
-</ul>
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>File Requests</title>
+		<style>
+			.request-table {
+				width: 80%;
+				margin: 20px auto;
+				border-collapse: collapse;
+				text-align: left;
+			}
 
-<script>
-    function approveRequest(requestId) {
-        fetch('/approve_request/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': '{{ csrf_token }}'
-            },
-            body: JSON.stringify({ request_id: requestId })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                alert('Request approved!');
-                location.reload();  // Reload the page to update the request list
-            } else {
-                alert('Failed to approve request: ' + data.message);
-            }
-        })
-        .catch(error => console.error('Error:', error));
-    }
+			.request-table th,
+			.request-table td {
+				border: 1px solid #ddd;
+				padding: 8px;
+			}
 
-    function declineRequest(requestId) {
-        fetch('/decline_request/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': '{{ csrf_token }}'
-            },
-            body: JSON.stringify({ request_id: requestId })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                alert('Request declined!');
-                location.reload();  // Reload the page to update the request list
-            } else {
-                alert('Failed to decline request: ' + data.message);
-            }
-        })
-        .catch(error => console.error('Error:', error));
-    }
-</script>
+			.request-table th {
+				background-color: #f2f2f2;
+			}
 
+			.action-button {
+				padding: 5px 10px;
+				background-color: #4caf50;
+				color: white;
+				border: none;
+				border-radius: 5px;
+				cursor: pointer;
+				transition: background-color 0.3s;
+			}
+
+			.action-button:hover {
+				background-color: #45a049;
+			}
+
+			.action-button.decline {
+				background-color: #f44336;
+			}
+
+			.action-button.decline:hover {
+				background-color: #e53935;
+			}
+		</style>
+	</head>
+	<body style="padding-top: 100px">
+		{% include 'navbar.html' %}
+		<h2 style="text-align: center">File Requests</h2>
+		<table class="request-table">
+			<thead>
+				<tr>
+					<th>Requester</th>
+					<th>File Name</th>
+					<th>Actions</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for request in requests %}
+				<tr>
+					<td>{{ request.requester }}</td>
+					<td>{{ request.filename }}</td>
+					<td>
+						<button
+							class="action-button"
+							onclick="approveRequest('{{ request.request_id }}')"
+						>
+							Approve
+						</button>
+						<button
+							class="action-button decline"
+							onclick="declineRequest('{{ request.request_id }}')"
+						>
+							Decline
+						</button>
+					</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+
+		<script>
+			function approveRequest(requestId) {
+				fetch("/approve_request/", {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+						"X-CSRFToken": "{{ csrf_token }}",
+					},
+					body: JSON.stringify({ request_id: requestId }),
+				})
+					.then((response) => response.json())
+					.then((data) => {
+						if (data.status === "success") {
+							alert("Request approved!");
+							location.reload(); // Reload the page to update the request list
+						} else {
+							alert("Failed to approve request: " + data.message);
+						}
+					})
+					.catch((error) => console.error("Error:", error));
+			}
+
+			function declineRequest(requestId) {
+				fetch("/decline_request/", {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+						"X-CSRFToken": "{{ csrf_token }}",
+					},
+					body: JSON.stringify({ request_id: requestId }),
+				})
+					.then((response) => response.json())
+					.then((data) => {
+						if (data.status === "success") {
+							alert("Request declined!");
+							location.reload(); // Reload the page to update the request list
+						} else {
+							alert("Failed to decline request: " + data.message);
+						}
+					})
+					.catch((error) => console.error("Error:", error));
+			}
+		</script>
+	</body>
+</html>

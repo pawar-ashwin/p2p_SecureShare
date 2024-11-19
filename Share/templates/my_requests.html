@@ -59,6 +59,7 @@
 						{% if request.status == "Approved" %}
 						<button
 							onclick="downloadFile('{{ request.owner }}', '{{ request.filename }}')"
+							class="action-button"
 						>
 							Download
 						</button>
