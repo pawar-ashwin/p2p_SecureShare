@@ -184,7 +184,7 @@ def login(request):
         
         if user:
             request.session['username'] = username  # Store the username in the session
-            messages.success(request, 'Login successful!')
+            # messages.success(request, 'Login successful!')
             print("Message set: Login successful!") 
             return redirect('user_dashboard')  # Redirect to the user dashboard after login
         else:
