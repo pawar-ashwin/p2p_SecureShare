@@ -38,14 +38,36 @@ class HomePage(TemplateView):
 class AboutPage(TemplateView):
     template_name = 'about.html'
 
+import socket
+
+def get_local_ip():
+    try:
+        # Create a socket to determine the local machine IP
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.settimeout(0)
+        
+        # Try to connect to an arbitrary external address (we don't need to actually connect)
+        s.connect(('8.8.8.8', 80))  # Google's public DNS server
+        local_ip = s.getsockname()[0]
+        s.close()
+        return local_ip
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
+
+
+
 def signup(request):
     if request.method == 'POST':
         new_email = request.POST.get('newEmail')
         new_username = request.POST.get('newUsername')
         new_password = request.POST.get('newPassword')
+        current_IP = get_local_ip()
         
         # Check if data is being captured correctly
         print(f"Email: {new_email}, Username: {new_username}, Password: {new_password}")
+
+
         
         # Check if the user already exists
         if users_collection.find_one({'username': new_username}):
@@ -59,7 +81,8 @@ def signup(request):
                 'username': new_username,
                 'password': new_password,  # Ideally, hash the password before storing
                 'share_path' : '',
-                'My_files':[]
+                'My_files':[],
+                'IP' : current_IP,
             })
             print("Insertion result:", result)
             messages.success(request, 'Signup successful! You can now log in.')
@@ -78,6 +101,7 @@ def login(request):
         
         # Check if the user exists in the database
         user = users_collection.find_one({'username': username, 'password': password})
+        user['IP'] = get_local_ip()
         
         if user:
             request.session['username'] = username  # Store the username in the session
@@ -477,11 +501,13 @@ def download_file(request, owner, filename):
         
         # Find the owner's share path from MongoDB
         owner = users_collection.find_one({"username": owner})
+        print(owner)
+        
         if not owner:
             return JsonResponse({"status": "error", "message": "Owner not found."})
         
         # Owner's server details
-        SERVER_HOST = "192.168.1.80"  # Replace with the owner's IP
+        SERVER_HOST = "192.168.247.191"  # Replace with the owner's IP
         SERVER_PORT = 5001  # Port used by the owner's server
 
         try:
@@ -527,6 +553,7 @@ def download_file(request, owner, filename):
 
             # Close the socket only after the file is fully received
             client_socket.close()
+            return JsonResponse({"status": "success", "message": f"File downloaded to {save_path}"})
             
         except Exception as e:
             print(f"Error during file transfer: {e}")
