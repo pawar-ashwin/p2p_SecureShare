@@ -23,5 +23,7 @@ with open(FILENAME, "wb") as file:
         file.write(data)
     print("[*] File received and saved.")
 
+
+client_socket.send("exit".encode())
 # Close socket
 client_socket.close()
