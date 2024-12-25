@@ -625,7 +625,7 @@ def download_file(request, owner, filename):
 
             # Send the filename to the server
             client_socket.send(file_to_request.encode())
-            save_path = os.path.join("C:\\",filename)
+            save_path = os.path.join("D:\\P2P_Downloads\\",filename)
 
             # Open the file to write the received content in binary mode
             with open(save_path, "wb") as file:
